@@ -1,0 +1,69 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|c:\\users\\antifreeze\\onedrive\\documents\\github\\pimroles-gui\\pimroles-gui.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|solutionrelative:pimroles-gui.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|c:\\users\\antifreeze\\onedrive\\documents\\github\\pimroles-gui\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|c:\\users\\antifreeze\\onedrive\\documents\\github\\pimroles-gui\\controltemplates.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{C10AD2A4-9103-4B72-AF86-712CBD35C5B7}|PIMRoles-GUI.csproj|solutionrelative:controltemplates.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PIMRoles-GUI.ps1",
+              "DocumentMoniker": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\PIMRoles-GUI.ps1",
+              "RelativeDocumentMoniker": "PIMRoles-GUI.ps1",
+              "ToolTip": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\PIMRoles-GUI.ps1",
+              "RelativeToolTip": "PIMRoles-GUI.ps1",
+              "ViewState": "AgIAAHkFAAAAAAAAAAAAAKAFAAAAAAAAAAAAAA==",
+              "Icon": "00000000-0000-0000-0000-000000000000.000000|iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHuSURBVDhPY/z//z8DDGRkZGx7\u002B/atJ5SLAYSFha8zMjK6z5gx4zFYAKQZGYeEhPz/\u002B/cvkIkJQHI7d\u002B78n56efgdokQxMPxPYJCKBq6srQ1BQkDJQ436YISQZAAJubm4MgYGBKkBDdoD4LGBRIoCtrS1DWFgYlAcG2mAS5A8YxhcGIPDv3z8wBqkBqQUC0rwAjAE4hgGSwwAdoBiwevVqRiYmJpDx\u002BDAnEMMBPBDViw50AmXjebnYRGSF2BmO3nzHyM/N9p\u002BDhZHxHzCIgEpAmu9f6bZTAWuAAmQXmAAV8r388JO5NVyLeUaSNtPtJ5\u002BZf/z\u002BD3ITM1AepPYvSB1IMQyADQDazgOkpNlZmdiB4cwQOuEsg5I4H8PsdB2Gn3/\u002BAjE8ua8CYidsgRgEFORiZmJkAsldvfyKYc/VdwwpzgoM4rwsDF9\u002BgCwGg8NA7AphQgDMAFtmRgbOV59\u002BMYjxcTIcn\u002BzM4KrNz\u002BDQeJzhwdtfDAJcLMCoY/gdayt9GajWAqIFAmAGqH379ZdbWoCTYVGGHsOVR\u002B8ZihZfZwgylWCYnqjFwMvBzPD5x98r5X7KikC1IO/CASwWRNlYmJg52Jj\u002BFS\u002B9\u002Bn/vlXcMOnK8jIdvvmUAJjrGH7///eZgZVoUGhqaC1UPytp7GBgYGABO7eigWB/pswAAAABJRU5ErkJggg==",
+              "WhenOpened": "2025-02-14T01:48:23.39Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ControlTemplates.xaml",
+              "DocumentMoniker": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\ControlTemplates.xaml",
+              "RelativeDocumentMoniker": "ControlTemplates.xaml",
+              "ToolTip": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\ControlTemplates.xaml",
+              "RelativeToolTip": "ControlTemplates.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-02-14T01:37:21.7Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "MainWindow.xaml",
+              "ToolTip": "C:\\Users\\Antifreeze\\OneDrive\\Documents\\GitHub\\PIMRoles-GUI\\MainWindow.xaml",
+              "RelativeToolTip": "MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-02-12T23:10:55.023Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
