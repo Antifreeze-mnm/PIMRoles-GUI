@@ -1475,6 +1475,19 @@ Copyright 2023 NCT 9-1-1
                                                 </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Role" Width="Auto"
                                                             Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
+                                                    <DataGridTextColumn.CellStyle>
+                                                        <Style TargetType="DataGridCell">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="True">
+                                                                    <Setter Property="Foreground" Value="Green"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="False">
+                                                                    <Setter Property="Foreground" Value="Black"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.CellStyle>
+                                                </DataGridTextColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>

@@ -136,20 +136,64 @@
                         <StackPanel Margin="0,0,0,-8">
                             <Label x:Name="lblSelectRoles" Content="Select Roles" Margin="10,0,0,0" Width="135" HorizontalAlignment="Left" FontSize="20"/>
                             <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,10,0,0" Width="735">
-                                <ListBox x:Name="RolesListBox" Height="234" Margin="3,10,9,0" SelectionMode="Multiple" BorderBrush="{x:Null}" >
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <CheckBox Content="{Binding DisplayName}" IsEnabled="{Binding IsSelectable}" Foreground="{Binding Foreground}" Padding="4,0,0,0" VerticalContentAlignment="Center" Style="{DynamicResource ToggleSwitch}" FontSize="14" />
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
+                                <Grid>
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="234" Margin="0,10,0,0">
+                                        <DataGrid
+                                            Name="RolesDataGrid"
+                                            Margin="0,10,0,0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Top"
+                                            AutoGenerateColumns="False"
+                                            FrozenColumnCount="4"
+                                            AlternationCount="2"
+                                            GridLinesVisibility="None"
+                                            DockPanel.Dock="Top"
+                                            BorderBrush="{x:Null}"
+                                            BorderThickness="0"
+                                            Grid.Row="1"
+                                            RowHeaderWidth="0"
+                                            CanUserAddRows="False"
+                                            SelectionMode="Single"
+                                            IsReadOnly="True"
+                                            ScrollViewer.CanContentScroll="True"
+                                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <DataGrid.Columns>
+                                                <DataGridTemplateColumn Header=" ">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Name="CheckBox"
+                                                                        IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+                                                <DataGridTextColumn Header="Role" Width="Auto"
+                                                            Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
+                                                    <DataGridTextColumn.CellStyle>
+                                                        <Style TargetType="DataGridCell">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="True">
+                                                                    <Setter Property="Foreground" Value="Green"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="False">
+                                                                    <Setter Property="Foreground" Value="Black"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DataGridTextColumn.CellStyle>
+                                                </DataGridTextColumn>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </ScrollViewer>
+                                </Grid>
                             </Border>
                             <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-                            <TextBox x:Name="ReasonTextBox" Height="23" Width="730"/>
-                            <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-                            <TextBox x:Name="DurationTextBox" Height="23" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
-                            <Label x:Name="lblPreviousSelections" Content="Previous Selections" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-                            <ComboBox x:Name="HistoryComboBox" Height="23" Width="730" HorizontalAlignment="Left" Margin="10,5,0,0"/>
+                            <TextBox x:Name="ReasonTextBox" Height="28" Width="730"/>
+                            <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,8,0,0"/>
+                            <TextBox x:Name="DurationTextBox" Height="28" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
+                            <Label x:Name="lblPreviousSelections" Content="Previous Selections" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
+                            <ComboBox x:Name="HistoryComboBox" Height="28" Width="730" HorizontalAlignment="Left" Margin="10,3,0,0"/>
                         </StackPanel>
                     </GroupBox>
                     <DockPanel Margin="10,0,10,0" DockPanel.Dock="Top" Height="46">
