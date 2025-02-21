@@ -1464,7 +1464,7 @@ Copyright 2023 NCT 9-1-1
                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                             <DataGrid.Columns>
-                                                <DataGridTemplateColumn Header=" ">
+                                                <DataGridTemplateColumn Header="">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Name="CheckBox"
@@ -1475,19 +1475,6 @@ Copyright 2023 NCT 9-1-1
                                                 </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Role" Width="Auto"
                                                             Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
-                                                    <DataGridTextColumn.CellStyle>
-                                                        <Style TargetType="DataGridCell">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="True">
-                                                                    <Setter Property="Foreground" Value="Green"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="False">
-                                                                    <Setter Property="Foreground" Value="Black"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </DataGridTextColumn.CellStyle>
-                                                </DataGridTextColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
@@ -2897,6 +2884,16 @@ Copyright 2023 NCT 9-1-1
 
         #region Main Program buttons and fields
 
+        # Define the custom class
+        class RoleItem {
+            [bool]$Checkbox
+            [string]$Role
+
+            RoleItem([bool]$checkbox, [string]$role) {
+                $this.Checkbox = $checkbox
+                $this.Role = $role
+            }
+        }
         # Ensure RolesDataGrid is correctly referenced
         $RolesDataGrid = $WPFGui.RolesDataGrid
 
@@ -2912,16 +2909,29 @@ Copyright 2023 NCT 9-1-1
 
         # Sort the PIM roles
         $SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
-        $ExampleGridItems = @'
+        <#        $ExampleGridItems = @'
 "CheckBox","Role"
-"False","Lorem ipsum dolor sit"
-"False","sed do eiusmod tempor"
-"False","Ut enim ad minim veniam"
+"False","Application Administrator"
+"False","Attack Simulation Administrator"
+"False","Authentication Policy Administrator"
 '@ | ConvertFrom-Csv
         # Add each row to the the ObservableCollection. The DataGrid will displat this data automatically
         $ExampleGridItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-
+#>
         # Refresh the RolesDataGrid to ensure it displays the updated items
+
+        # Populate the RolesDataGrid with sorted roles
+        $RoleItems = @()
+        foreach ($Role in $SortedRoles) {
+            $RoleItems += [PSCustomObject]@{
+                Checkbox = $false
+                Role     = $Role.RoleDefinition.DisplayName
+            }
+        }
+        $RoleItems | ForEach-Object {
+            $WPFGui.RolesList.Add($_) | Out-Null
+        }
+        #>
         $RolesDataGrid.Items.Refresh()
 
         $WPFGui.MenuOpen.add_Completed( {
@@ -2950,7 +2960,7 @@ Copyright 2023 NCT 9-1-1
 
         # The best way to bind data to list controls - ComboBoxes, ListBoxes, DataGrids, et. al. - is to use an ObservableCollection
 
-        # Create an ObservableCollection for the example DataGrid
+        <#        # Create an ObservableCollection for the example DataGrid
         $WPFGui.Add('ExampleGridItemsList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]) )
 
         # Set the ObservableCollection as the ItemsSource for the DataGrid
@@ -2966,7 +2976,7 @@ Copyright 2023 NCT 9-1-1
 
         # Add each row to the the ObservableCollection. The DataGrid will displat this data automatically
         $ExampleGridItems.Foreach({ $WPFGui.ExampleGridItemsList.Add($_) | Out-Null })
-
+#>
 
         # The ComboBoxes work similarly to the DataGrid.
 

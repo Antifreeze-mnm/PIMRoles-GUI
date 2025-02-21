@@ -2884,30 +2884,39 @@ Copyright 2023 NCT 9-1-1
 
         #region Main Program buttons and fields
 
-        # Ensure RolesDataGrid is correctly referenced
-        $RolesDataGrid = $WPFGui.RolesDataGrid
+        # Define the custom class
+        class RoleItem {
+            [bool]$Checkbox
+            [string]$Role
 
-        # Check if RolesDataGrid is correctly referenced
-        if ($null -eq $RolesDataGrid) {
-            Write-Error "RolesDataGrid is not correctly referenced."
-            return
+            RoleItem([bool]$checkbox,[string]$role) {
+                $this.Checkbox = $checkbox
+                $this.Role = $role
+            }
         }
-
+        $RolesDataGrid = $WPFGui.RolesDataGrid
         # Create an ObservableCollection for the RolesDataGrid
         $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
         $RolesDataGrid.ItemsSource = $WPFGui.RolesList
-
         # Sort the PIM roles
         $SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
-        $ExampleGridItems = @'
+        $RoleItems = @()
+        foreach ($Role in $SortedRoles) {
+            $RoleItems += [RoleItem]::new($false,$Role.RoleDefinition.DisplayName)
+        }
+        $RoleItems=$RoleItems | ConvertFrom-Csv
+        $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
+        # Debug output to verify that the RolesList is populated
+        Write-Host "RolesList populated with $($WPFGui.RolesList.Count) items."
+<#
+$ExampleGridItems = @'
 "CheckBox","Role"
-"False","Lorem ipsum dolor sit"
-"False","sed do eiusmod tempor"
-"False","Ut enim ad minim veniam"
+"False","Application Administrator"
+"False","Attack Simulation Administrator"
+"False","Authentication Policy Administrator"
 '@ | ConvertFrom-Csv
-        # Add each row to the the ObservableCollection. The DataGrid will displat this data automatically
         $ExampleGridItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-
+#>
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
 
