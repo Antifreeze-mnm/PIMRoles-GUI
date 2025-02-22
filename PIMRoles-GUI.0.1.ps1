@@ -7,6 +7,7 @@ Purpose: Use this template to create new GUI tools.
 Copyright 2023 NCT 9-1-1 
 
 #>
+
 #Region Gather PIM Role Data
 # Connect to Microsoft Graph using device code authentication
 Connect-MgGraph -Scopes "RoleManagement.Read.Directory", "RoleManagement.ReadWrite.Directory", "User.Read" -UseDeviceAuthentication -NoWelcome
@@ -37,7 +38,7 @@ $newRunspace.SessionStateProxy.SetVariable("WPFGui", $WPFGui)
 
 #Create master runspace andadd code
 $psCmd = [System.Management.Automation.PowerShell]::Create().AddScript( {
-
+$CapturedOutput = ""
         # Add WPF and Windows Forms assemblies. This must be done inside the runspace that contains the primary program code.
         try {
             Add-Type -AssemblyName PresentationCore, PresentationFramework, WindowsBase, System.Drawing, system.windows.forms, System.Windows.Controls.Ribbon, System.DirectoryServices.AccountManagement
@@ -2907,32 +2908,69 @@ Copyright 2023 NCT 9-1-1
         $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
         $RolesDataGrid.ItemsSource = $WPFGui.RolesList
 
-        # Sort the PIM roles
-        $SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
-        <#        $ExampleGridItems = @'
-"CheckBox","Role"
-"False","Application Administrator"
-"False","Attack Simulation Administrator"
-"False","Authentication Policy Administrator"
-'@ | ConvertFrom-Csv
-        # Add each row to the the ObservableCollection. The DataGrid will displat this data automatically
-        $ExampleGridItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
+        # --- Test Data for $SortedRoles ---
+
+$SortedRoles = @(
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Application Administrator"
+        }
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Attack Simulation Administrator"
+        }
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Authentication Policy Administrator"
+        }
+    }
+    # Add more test roles here if you want
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Compliance Administrator"
+        }
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Conditional Access Administrator"
+        }
+    }
+)
 #>
+
         # Refresh the RolesDataGrid to ensure it displays the updated items
 
-        # Populate the RolesDataGrid with sorted roles
-        $RoleItems = @()
-        foreach ($Role in $SortedRoles) {
-            $RoleItems += [PSCustomObject]@{
-                Checkbox = $false
-                Role     = $Role.RoleDefinition.DisplayName
-            }
+# Populate the RolesDataGrid with sorted roles
+$RoleItems = @()
+foreach ($Role in $SortedRoles.RoleDefinition) {
+    try {
+        $RoleDisplayName = $Role.DisplayName
+
+        # --- ADD THESE DEBUGGING LINES USING VARIABLE ACCUMULATION ---
+        $CapturedOutput += "VERBOSE: --- Role Data Inspection ---\r\n"
+        $CapturedOutput += "VERBOSE: Role Object Type: $($Role.GetType().FullName)`r`n" # Type of the entire $Role object
+        $CapturedOutput += "VERBOSE: RoleDisplayName Data Type: $($RoleDisplayName.GetType().FullName)`r`n" # Data type of DisplayName
+        $CapturedOutput += "VERBOSE: RoleDisplayName Value: '$RoleDisplayName'`r`n" # Actual value of DisplayName
+        $CapturedOutput += "VERBOSE: --- End Role Data Inspection ---\r\n"
+        # --- END DEBUGGING LINES ---
+
+        $RoleItem = [PSCustomObject]@{
+            Checkbox = $false
+            Role     = $RoleDisplayName
         }
-        $RoleItems | ForEach-Object {
-            $WPFGui.RolesList.Add($_) | Out-Null
-        }
+        #$RoleItems += $RoleItem
+        $WPFGui.RolesList.Add($RoleItem)
+    }
+    catch {
+        $CapturedOutput += "VERBOSE: ERROR: Error processing role $($Role.Id): $_`r`n" # Error handling using variable accumulation
+    }
+}
+
+#>
         #>
-        $RolesDataGrid.Items.Refresh()
+        #$RolesDataGrid.Items.Refresh() # Keep this commented out for now
 
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
@@ -3065,6 +3103,9 @@ Copyright 2023 NCT 9-1-1
             $WPFGui.Runspace.Close()
             $WPFGui.Runspace.Dispose()
         }
+        $CapturedOutput
     })
 $psCmd.Runspace = $newRunspace
-$data = $psCmd.Invoke()
+$data = $psCmd.Invoke() | out-string
+
+Write-host $data
