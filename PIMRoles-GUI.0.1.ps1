@@ -1474,8 +1474,7 @@ Copyright 2023 NCT 9-1-1
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
-                                                <DataGridTextColumn Header="Role" Width="Auto"
-                                                            Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
+                                                <DataGridTextColumn Header="Role Name" Width="Auto" Binding="{}" />
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
@@ -2908,65 +2907,83 @@ Copyright 2023 NCT 9-1-1
         $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
         $RolesDataGrid.ItemsSource = $WPFGui.RolesList
 
-        # --- Test Data for $SortedRoles ---
-
+# --- More Realistic Test Data for $SortedRoles (Mimicking Live Data Structure) ---
+<#
 $SortedRoles = @(
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
             DisplayName = "Application Administrator"
+            Description = "Example Description for Application Administrator" # Add other properties if needed for realism
+            Id = "test-role-id-1"
         }
+        # Add other properties of MicrosoftGraphUnifiedRoleEligibilitySchedule if needed for more realism, but RoleDefinition is key
+        Id = "test-schedule-id-1"
     }
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
             DisplayName = "Attack Simulation Administrator"
+            Description = "Example Description for Attack Simulation Administrator"
+            Id = "test-role-id-2"
         }
+        Id = "test-schedule-id-2"
     }
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
             DisplayName = "Authentication Policy Administrator"
+            Description = "Example Description for Authentication Policy Administrator"
+            Id = "test-role-id-3"
         }
+        Id = "test-schedule-id-3"
     }
-    # Add more test roles here if you want
+    # Add more test roles here in the same structure
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
             DisplayName = "Compliance Administrator"
+            Description = "Example Description for Compliance Administrator"
+            Id = "test-role-id-4"
         }
+         Id = "test-schedule-id-4"
     }
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
             DisplayName = "Conditional Access Administrator"
+            Description = "Example Description for Conditional Access Administrator"
+            Id = "test-role-id-5"
         }
+        Id = "test-schedule-id-5"
     }
 )
+# --- End of More Realistic Test Data for $SortedRoles ---
 #>
-
-        # Refresh the RolesDataGrid to ensure it displays the updated items
 
 # Populate the RolesDataGrid with sorted roles
 $RoleItems = @()
-foreach ($Role in $SortedRoles.RoleDefinition) {
+# --- Simplify Data Binding: Just Strings ---
+Write-Verbose "Runspace: Populating RolesDataGrid with SIMPLE STRINGS..." -Verbose
+$WPFGui.RolesList.Clear() # Clear existing items (important if testing repeatedly)
+
+$RoleDisplayNames = [System.Collections.ObjectModel.ObservableCollection[string]]::new() # ObservableCollection of strings
+
+foreach ($Role in $SortedRoles) {
     try {
-        $RoleDisplayName = $Role.DisplayName
-
-        # --- ADD THESE DEBUGGING LINES USING VARIABLE ACCUMULATION ---
-        $CapturedOutput += "VERBOSE: --- Role Data Inspection ---\r\n"
-        $CapturedOutput += "VERBOSE: Role Object Type: $($Role.GetType().FullName)`r`n" # Type of the entire $Role object
-        $CapturedOutput += "VERBOSE: RoleDisplayName Data Type: $($RoleDisplayName.GetType().FullName)`r`n" # Data type of DisplayName
-        $CapturedOutput += "VERBOSE: RoleDisplayName Value: '$RoleDisplayName'`r`n" # Actual value of DisplayName
-        $CapturedOutput += "VERBOSE: --- End Role Data Inspection ---\r\n"
-        # --- END DEBUGGING LINES ---
-
-        $RoleItem = [PSCustomObject]@{
-            Checkbox = $false
-            Role     = $RoleDisplayName
+        if ($Role.RoleDefinition -ne $null) {
+            $RoleDisplayName = $Role.RoleDefinition.DisplayName
+            $RoleDisplayNames.Add($RoleDisplayName) # Add just the string to the ObservableCollection
+        } else {
+            $RoleDisplayName = "Role Definition Not Available"
+            Write-Warning "RoleDefinition is NULL for Role ID: $($Role.Id)"
+            $RoleDisplayNames.Add($RoleDisplayName) # Add default string even if RoleDefinition is null
         }
-        #$RoleItems += $RoleItem
-        $WPFGui.RolesList.Add($RoleItem)
     }
     catch {
-        $CapturedOutput += "VERBOSE: ERROR: Error processing role $($Role.Id): $_`r`n" # Error handling using variable accumulation
+        Write-Error "Error processing role $($Role.Id): $_"
     }
 }
+
+$WPFGui.RolesList = $RoleDisplayNames # Set RolesList to the string collection
+
+Write-Verbose "Runspace: String-based DataGrid population COMPLETED." -Verbose
+# --- End Simplified Binding ---
 
 #>
         #>
@@ -3109,3 +3126,8 @@ $psCmd.Runspace = $newRunspace
 $data = $psCmd.Invoke() | out-string
 
 Write-host $data
+<#
+Write-output "--- Get-Member output for \$SortedRoles[0] ---"
+$SortedRoles[0] | Get-Member -MemberType All | Out-string | Write-Output
+Write-Output "--- End Get-Member output ---"
+#>
