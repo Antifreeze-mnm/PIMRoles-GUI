@@ -2908,7 +2908,57 @@ Copyright 2023 NCT 9-1-1
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
         # Debug output to verify that the RolesList is populated
         Write-Host "RolesList populated with $($WPFGui.RolesList.Count) items."
+
+# --- More Realistic Test Data for $SortedRoles (Mimicking Live Data Structure) ---
 <#
+$SortedRoles = @(
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Application Administrator"
+            Description = "Example Description for Application Administrator" # Add other properties if needed for realism
+            Id = "test-role-id-1"
+        }
+        # Add other properties of MicrosoftGraphUnifiedRoleEligibilitySchedule if needed for more realism, but RoleDefinition is key
+        Id = "test-schedule-id-1"
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Attack Simulation Administrator"
+            Description = "Example Description for Attack Simulation Administrator"
+            Id = "test-role-id-2"
+        }
+        Id = "test-schedule-id-2"
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Authentication Policy Administrator"
+            Description = "Example Description for Authentication Policy Administrator"
+            Id = "test-role-id-3"
+        }
+        Id = "test-schedule-id-3"
+    }
+    # Add more test roles here in the same structure
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Compliance Administrator"
+            Description = "Example Description for Compliance Administrator"
+            Id = "test-role-id-4"
+        }
+         Id = "test-schedule-id-4"
+    }
+    [PSCustomObject]@{
+        RoleDefinition = [PSCustomObject]@{
+            DisplayName = "Conditional Access Administrator"
+            Description = "Example Description for Conditional Access Administrator"
+            Id = "test-role-id-5"
+        }
+        Id = "test-schedule-id-5"
+    }
+)
+
+# --- End of More Realistic Test Data for $SortedRoles ---
+#>
+        <#
 $ExampleGridItems = @'
 "CheckBox","Role"
 "False","Application Administrator"
