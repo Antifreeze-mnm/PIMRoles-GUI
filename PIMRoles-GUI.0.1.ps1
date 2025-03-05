@@ -1476,7 +1476,7 @@ Copyright 2023 NCT 9-1-1
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
-                                                <DataGridTextColumn Header="Role Name" Width="Auto" Binding="{Binding Path=Role}" />
+                                                <DataGridTextColumn Header="Role Name" Binding="{Binding Role}" Width="*" />
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
