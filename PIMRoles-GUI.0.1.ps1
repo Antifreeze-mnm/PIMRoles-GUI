@@ -1198,12 +1198,14 @@ public static void SetTop(IntPtr hWindow)
                     }
                 }
 
+                $DirectoryScopeID = get-mgorganization | Select-Object -ExpandProperty Id
+
                 # Setup parameters for activation
                 $params = @{
                     Action           = "selfActivate"
                     PrincipalId      = $CurrentAccountId
                     RoleDefinitionId = $SelectedRole.RoleDefinitionId
-                    DirectoryScopeId = "/"
+                    DirectoryScopeId = $DirectoryScopeID
                     Justification    = $Reason
                     ScheduleInfo     = $Schedule
                 }
@@ -1449,7 +1451,7 @@ Copyright 2023 NCT 9-1-1
                                             Margin="0,10,0,0"
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Top"
-                                            AutoGenerateColumns="False"
+                                            AutoGenerateColumns="True"
                                             FrozenColumnCount="4"
                                             AlternationCount="2"
                                             GridLinesVisibility="None"
@@ -1474,7 +1476,7 @@ Copyright 2023 NCT 9-1-1
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
-                                                <DataGridTextColumn Header="Role Name" Width="Auto" Binding="{}" />
+                                                <DataGridTextColumn Header="Role Name" Width="Auto" Binding="{Binding Path=Role}" />
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
@@ -2966,14 +2968,14 @@ $RoleDisplayNames = [System.Collections.ObjectModel.ObservableCollection[string]
 
 foreach ($Role in $SortedRoles) {
     try {
-        if ($Role.RoleDefinition -ne $null) {
-            $RoleDisplayName = $Role.RoleDefinition.DisplayName
-            $RoleDisplayNames.Add($RoleDisplayName) # Add just the string to the ObservableCollection
-        } else {
-            $RoleDisplayName = "Role Definition Not Available"
-            Write-Warning "RoleDefinition is NULL for Role ID: $($Role.Id)"
-            $RoleDisplayNames.Add($RoleDisplayName) # Add default string even if RoleDefinition is null
+        $RoleDisplayName = $Role.RoleDefinition.DisplayName
+
+        $RoleItem = [PSCustomObject]@{
+            Checkbox = $false
+            Role     = $RoleDisplayName
         }
+        $RolesDataGrid.Items.Add($RoleItem) # Add directly to $RolesDataGrid.Items
+
     }
     catch {
         Write-Error "Error processing role $($Role.Id): $_"
