@@ -1005,7 +1005,6 @@ public static void SetTop(IntPtr hWindow)
             return $Result
         }
         $SessionFunctions.Add('Get-FolderName') | Out-Null
-
         function ConvertFrom-FlowDocument {
             <#
                 .SYNOPSIS
@@ -1060,7 +1059,6 @@ public static void SetTop(IntPtr hWindow)
             return $html
         }
         $SessionFunctions.Add('ConvertFrom-FlowDocument') | Out-Null
-
         function Save-FlowDocument {
             <#
                 .SYNOPSIS
@@ -1133,7 +1131,6 @@ public static void SetTop(IntPtr hWindow)
             $FHand.Close()
         }
         $SessionFunctions.Add('Save-FlowDocument') | Out-Null
-
         function Activate-PIMRole {
             param (
                 [array]$SelectedRoles,
@@ -1276,13 +1273,13 @@ public static void SetTop(IntPtr hWindow)
             $window.Close()
         }
         $SessionFunctions.Add('Activate-PIMRole') | Out-Null
-
         function CheckBox_Checked {
             param(
                 $sender, 
                 $eventArgs
             )
-
+Write-verbose "DEBUG: CheckBox_Checked event triggered." -Verbose
+            <#
             $roleItem = $sender.DataContext # Get the RoleItem object from the row
             $roleName = $roleItem.Role       # Extract the Role Name
             $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
@@ -1298,15 +1295,16 @@ public static void SetTop(IntPtr hWindow)
             # Update the ListBox
             $SelectedRolesListBox.ItemsSource = $selectedRoleNames
             $SelectedRolesListBox.Items.Refresh()
+            #>
         }
         $SessionFunctions.Add('CheckBox_Checked') | Out-Null
-
         function CheckBox_Unchecked {
             param(
                 $sender, 
                 $eventArgs
             )
-
+            Write-verbose "DEBUG: CheckBox_Unchecked event triggered." -Verbose
+            <#
             $roleItem = $sender.DataContext # Get the RoleItem object from the row
             $roleName = $roleItem.Role       # Extract the Role Name
             $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
@@ -1320,6 +1318,7 @@ public static void SetTop(IntPtr hWindow)
             # Update the ListBox
             $SelectedRolesListBox.ItemsSource = $selectedRoleNames
             $SelectedRolesListBox.Items.Refresh()
+            #>
         }
         $SessionFunctions.Add('CheckBox_Unchecked') | Out-Null
 
