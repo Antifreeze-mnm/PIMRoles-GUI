@@ -1,0 +1,25 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20250312150242
+Username: DATACOM-NZ\mark.jackson
+RunAs User: DATACOM-NZ\mark.jackson
+Configuration Name: 
+Machine: DC5CD340FTTH (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -file .\PIMRoles-GUI.0.1.ps1 -verbose
+Process ID: 94400
+PSVersion: 5.1.22621.4391
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.4391
+BuildVersion: 10.0.22621.4391
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+VERBOSE: DEBUG: Transcript started inside runsapce.
+VERBOSE: RolesList populated with 0 items.
+VERBOSE: DEBUG: Transcript stopping inside runsapce.
+**********************
+Windows PowerShell transcript end
+End time: 20250312150249
+**********************

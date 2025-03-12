@@ -14,7 +14,7 @@
     Title="PIM Role Activation 0.5"
     Width="800"
     MinWidth="800"
-    Height="800"
+    Height="900"
     MinHeight="800"
     Name="ActivationWindow"
     AllowsTransparency="True"
@@ -132,7 +132,7 @@
                     <DockPanel.Effect >
                         <BlurEffect x:Name="MainDockBlur" Radius="0"/>
                     </DockPanel.Effect>
-                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="505">
+                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="635">
                         <StackPanel Margin="0,0,0,-8">
                             <Label x:Name="lblSelectRoles" Content="Select Roles" Margin="10,0,0,0" Width="135" HorizontalAlignment="Left" FontSize="20"/>
                             <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,10,0,0" Width="735">
@@ -164,29 +164,30 @@
                                                         <DataTemplate>
                                                             <CheckBox Name="CheckBox"
                                                                         IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
-                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"/>
+                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"
+                                                                        Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Role" Width="Auto"
                                                             Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
-                                                    <DataGridTextColumn.CellStyle>
-                                                        <Style TargetType="DataGridCell">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="True">
-                                                                    <Setter Property="Foreground" Value="Green"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Path=Checkbox}" Value="False">
-                                                                    <Setter Property="Foreground" Value="Black"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </DataGridTextColumn.CellStyle>
-                                                </DataGridTextColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
                                 </Grid>
+                            </Border>
+                            <Label x:Name="lblSelectedRolesDisplay" Content="Selected Roles:" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
+                            <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,3,0,10" Width="735" Height="80">
+                                <ListBox
+                                    x:Name="SelectedRolesListBox"
+                                    Margin="5"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    BorderBrush="{x:Null}"
+                                    BorderThickness="0"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    </ListBox>
                             </Border>
                             <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
                             <TextBox x:Name="ReasonTextBox" Height="28" Width="730"/>

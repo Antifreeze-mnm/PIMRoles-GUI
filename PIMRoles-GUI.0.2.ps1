@@ -59,8 +59,8 @@ $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
 
 #Create master runspace and add code
 $psCmd = [System.Management.Automation.PowerShell]::Create().AddScript( {
-Start-Transcript -Path "runspace_transcript.txt" -Append
-Write-Verbose "DEBUG: Transcript started inside runsapce." -verbose
+        Start-Transcript -Path "runspace_transcript.txt" -Append
+        Write-Verbose "DEBUG: Transcript started inside runsapce." -verbose
         # Add WPF and Windows Forms assemblies. This must be done inside the runspace that contains the primary program code.
         try {
             Add-Type -AssemblyName PresentationCore, PresentationFramework, WindowsBase, System.Drawing, system.windows.forms, System.Windows.Controls.Ribbon, System.DirectoryServices.AccountManagement
@@ -121,7 +121,6 @@ public static void SetTop(IntPtr hWindow)
 
         # This is the list of functions to add to the InitialSessionState that is used for all Asynchronus Runsspaces
         $SessionFunctions = New-Object  System.Collections.ArrayList
-
 
         function Invoke-Async {
             <#
@@ -1278,6 +1277,52 @@ public static void SetTop(IntPtr hWindow)
         }
         $SessionFunctions.Add('Activate-PIMRole') | Out-Null
 
+        function CheckBox_Checked {
+            param(
+                $sender, 
+                $eventArgs
+            )
+
+            $roleItem = $sender.DataContext # Get the RoleItem object from the row
+            $roleName = $roleItem.Role       # Extract the Role Name
+            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
+
+            # Get the current items in the ListBox (if any)
+            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
+
+            # Add the role name if it's not already in the list
+            if ($selectedRoleNames -notcontains $roleName) {
+                $selectedRoleNames += $roleName
+            }
+
+            # Update the ListBox
+            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
+            $SelectedRolesListBox.Items.Refresh()
+        }
+        $SessionFunctions.Add('CheckBox_Checked') | Out-Null
+
+        function CheckBox_Unchecked {
+            param(
+                $sender, 
+                $eventArgs
+            )
+
+            $roleItem = $sender.DataContext # Get the RoleItem object from the row
+            $roleName = $roleItem.Role       # Extract the Role Name
+            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
+
+            # Get the current items in the ListBox (if any)
+            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
+
+            # Remove the role name from the list
+            $selectedRoleNames = $selectedRoleNames | Where-Object { $_ -ne $roleName }
+
+            # Update the ListBox
+            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
+            $SelectedRolesListBox.Items.Refresh()
+        }
+        $SessionFunctions.Add('CheckBox_Unchecked') | Out-Null
+
         # Create an Initial Session State for the ASync runspace and add all the functions in $SessionFunctions to it.
         $InitialSessionState = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
         $SessionFunctions.ForEach({
@@ -1342,7 +1387,7 @@ Copyright 2023 NCT 9-1-1
     Title="PIM Role Activation 0.5"
     Width="800"
     MinWidth="800"
-    Height="800"
+    Height="900"
     MinHeight="800"
     Name="ActivationWindow"
     AllowsTransparency="True"
@@ -1460,7 +1505,7 @@ Copyright 2023 NCT 9-1-1
                     <DockPanel.Effect >
                         <BlurEffect x:Name="MainDockBlur" Radius="0"/>
                     </DockPanel.Effect>
-                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="505">
+                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="635">
                         <StackPanel Margin="0,0,0,-8">
                             <Label x:Name="lblSelectRoles" Content="Select Roles" Margin="10,0,0,0" Width="135" HorizontalAlignment="Left" FontSize="20"/>
                             <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,10,0,0" Width="735">
@@ -1492,7 +1537,8 @@ Copyright 2023 NCT 9-1-1
                                                         <DataTemplate>
                                                             <CheckBox Name="CheckBox"
                                                                         IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
-                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"/>
+                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"
+                                                                        Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -1502,6 +1548,19 @@ Copyright 2023 NCT 9-1-1
                                         </DataGrid>
                                     </ScrollViewer>
                                 </Grid>
+                            </Border>
+                            <Label x:Name="lblSelectedRolesDisplay" Content="Selected Roles:" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
+                            <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,3,0,10" Width="735" Height="80">
+                                <ListBox
+                                    x:Name="SelectedRolesListBox"
+                                    Margin="5"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"
+                                    BorderBrush="{x:Null}"
+                                    BorderThickness="0"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    </ListBox>
                             </Border>
                             <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
                             <TextBox x:Name="ReasonTextBox" Height="28" Width="730"/>
@@ -3004,8 +3063,6 @@ write-verbose "--- DEBUG: End $SortedRoles Object Structure ---" -verbose
         }
         write-verbose "--- DEBUG: End of \$WPFGui.RolesList contents ---"
         #endregion
-        #>
-
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
 

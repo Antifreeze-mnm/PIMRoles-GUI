@@ -17,7 +17,7 @@ $CurrentAccountId = $CurrentUser.Id
 # Retrieve role eligibility schedules for the current user
 $PimRoles = Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '$CurrentAccountId'" -ExpandProperty "roleDefinition"
 # Sort the PIM roles
-$SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
+#$SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
 # Retrieve all built-in roles
 $allBuiltInRoles = Get-MgRoleManagementDirectoryRoleDefinition -All
 # Retrieve role management policy assignments and policies
@@ -91,7 +91,7 @@ public static void SetTop(IntPtr hWindow)
 '@
         }
         catch {
-            Write-Verbose "Win32Util already defined"
+            Write-Verbose "Win32Util already defined" -verbose
         }
 
         #region Utility Functions
@@ -2884,33 +2884,7 @@ Copyright 2023 NCT 9-1-1
 
         #region Main Program buttons and fields
 
-        # Define the custom class
-        class RoleItem {
-            [bool]$Checkbox
-            [string]$Role
-
-            RoleItem([bool]$checkbox,[string]$role) {
-                $this.Checkbox = $checkbox
-                $this.Role = $role
-            }
-        }
-        $RolesDataGrid = $WPFGui.RolesDataGrid
-        # Create an ObservableCollection for the RolesDataGrid
-        $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
-        $RolesDataGrid.ItemsSource = $WPFGui.RolesList
-        # Sort the PIM roles
-        $SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
-        $RoleItems = @()
-        foreach ($Role in $SortedRoles) {
-            $RoleItems += [RoleItem]::new($false,$Role.RoleDefinition.DisplayName)
-        }
-        $RoleItems=$RoleItems | ConvertFrom-Csv
-        $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-        # Debug output to verify that the RolesList is populated
-        Write-Host "RolesList populated with $($WPFGui.RolesList.Count) items."
-
-# --- More Realistic Test Data for $SortedRoles (Mimicking Live Data Structure) ---
-<#
+        # --- More Realistic Test Data for $SortedRoles (Mimicking Live Data Structure) ---
 $SortedRoles = @(
     [PSCustomObject]@{
         RoleDefinition = [PSCustomObject]@{
@@ -2955,10 +2929,46 @@ $SortedRoles = @(
         Id = "test-schedule-id-5"
     }
 )
-
 # --- End of More Realistic Test Data for $SortedRoles ---
+        # Define the custom class
+        class RoleItem {
+            [bool]$Checkbox
+            [string]$Role
+
+            RoleItem([bool]$checkbox,[string]$role) {
+                $this.Checkbox = $checkbox
+                $this.Role = $role
+            }
+        }
+        $RolesDataGrid = $WPFGui.RolesDataGrid
+        # Create an ObservableCollection for the RolesDataGrid
+        $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
+        $RolesDataGrid.ItemsSource = $WPFGui.RolesList
+        # Sort the PIM roles
+        #$SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
+
+<#
+write-verbose "--- DEBUG: $SortedRoles Object Structure ---" -verbose
+$SortedRoles | Get-Member
+write-verbose `r`n"--- DEBUG: First Role Object in $SortedRoles ---" -verbose
+$SortedRoles[0] | Get-Member
+write-verbose `r`n"--- DEBUG: First Role Object - RoleDefinition Property ---" -verbose
+$SortedRoles[0].RoleDefinition | Get-Member
+write-verbose `r`n"--- DEBUG: First Role Object - RoleDefinition.DisplayName Value ---" -verbose
+$SortedRoles[0].RoleDefinition.DisplayName
+write-verbose "--- DEBUG: End $SortedRoles Object Structure ---" -verbose
 #>
-        <#
+        $RoleItems = @()
+        foreach ($Role in $SortedRoles) {
+            $RoleItems += [RoleItem]::new($false,$Role.RoleDefinition.DisplayName)
+        }
+        #$RoleItems=$RoleItems | ConvertFrom-Csv # For ExampleGridItenms
+        $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
+        # Debug output to verify that the RolesList is populated
+        write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
+
+#>
+<#
 $ExampleGridItems = @'
 "CheckBox","Role"
 "False","Application Administrator"
@@ -2997,13 +3007,13 @@ $ExampleGridItems = @'
         # The best way to bind data to list controls - ComboBoxes, ListBoxes, DataGrids, et. al. - is to use an ObservableCollection
 
         # Create an ObservableCollection for the example DataGrid
-        $WPFGui.Add('ExampleGridItemsList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]) )
+        #$WPFGui.Add('ExampleGridItemsList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]) )
 
         # Set the ObservableCollection as the ItemsSource for the DataGrid
-        $WPFGui.ExampleGrid.ItemsSource = $WPFGUI.ExampleGridItemsList
+        #$WPFGui.ExampleGrid.ItemsSource = $WPFGUI.ExampleGridItemsList
 
         # Some sample data for the grid, in CSV format
-        $ExampleGridItems = @'
+<#        $ExampleGridItems = @'
 "CheckBox","Description","Filename","ExtraInfo","RowIsValid"
 "True","Lorem ipsum dolor sit","amet.xslx","consectetur adipiscing elit","True"
 "False","sed do eiusmod tempor","incididunt.txt","ut labore et dolore magna aliqua.","True"
@@ -3012,7 +3022,7 @@ $ExampleGridItems = @'
 
         # Add each row to the the ObservableCollection. The DataGrid will displat this data automatically
         $ExampleGridItems.Foreach({ $WPFGui.ExampleGridItemsList.Add($_) | Out-Null })
-
+#>
 
         # The ComboBoxes work similarly to the DataGrid.
 
