@@ -7,8 +7,6 @@ Purpose: Use this template to create new GUI tools.
 Copyright 2023 NCT 9-1-1 
 
 #>
-Write-Host "--- START OF SCRIPT ---"
-Write-Verbose "VERBOSE: [START] Verbose output test - script beginning" -Verbose
 #Region Gather PIM Role Data
 try {
     # Connect to Microsoft Graph using device code authentication
@@ -16,8 +14,6 @@ try {
     Write-Verbose "VERBOSE: [PIM Data] Connect-MgGraph successful" -Verbose
 }
 catch {
-    Write-Host "ERROR: Connect-MgGraph failed!"
-    Write-Host $_.Exception.Message
     Write-Verbose "VERBOSE: [PIM Data] Connect-MgGraph ERROR: $($_.Exception.Message)" -Verbose
     return # Stop script execution if Connect-MgGraph fails
 }
@@ -31,8 +27,6 @@ try {
     Write-Verbose "VERBOSE: [PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule successful. Role count: $($PimRoles.Count)" -Verbose
 }
 catch {
-    Write-Host "ERROR: Get-MgRoleManagementDirectoryRoleEligibilitySchedule failed!"
-    Write-Host $_.Exception.Message
     Write-Verbose "VERBOSE: [PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule ERROR: $($_.Exception.Message)" -Verbose
     return # Stop script execution if Get-MgRoleManagementDirectoryRoleEligibilitySchedule fails
 }
@@ -59,7 +53,7 @@ $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
 
 #Create master runspace and add code
 $psCmd = [System.Management.Automation.PowerShell]::Create().AddScript( {
-        Start-Transcript -Path "runspace_transcript.txt" -Append
+        #Start-Transcript -Path "runspace_transcript.txt" -Append
         Write-Verbose "DEBUG: Transcript started inside runsapce." -verbose
         # Add WPF and Windows Forms assemblies. This must be done inside the runspace that contains the primary program code.
         try {
@@ -1273,48 +1267,6 @@ public static void SetTop(IntPtr hWindow)
             $window.Close()
         }
         $SessionFunctions.Add('Activate-PIMRole') | Out-Null
-        function CheckBox_Checked {
-            param(
-                $sender, 
-                $eventArgs
-            )
-            $roleItem = $sender.DataContext # Get the RoleItem object from the row
-            $roleName = $roleItem.Role       # Extract the Role Name
-            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
-
-            # Get the current items in the ListBox (if any)
-            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
-
-            # Add the role name if it's not already in the list
-            if ($selectedRoleNames -notcontains $roleName) {
-                $selectedRoleNames += $roleName
-            }
-
-            # Update the ListBox
-            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
-            $SelectedRolesListBox.Items.Refresh()
-        }
-        $SessionFunctions.Add('CheckBox_Checked') | Out-Null
-        function CheckBox_Unchecked {
-            param(
-                $sender, 
-                $eventArgs
-            )
-            $roleItem = $sender.DataContext # Get the RoleItem object from the row
-            $roleName = $roleItem.Role       # Extract the Role Name
-            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
-
-            # Get the current items in the ListBox (if any)
-            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
-
-            # Remove the role name from the list
-            $selectedRoleNames = $selectedRoleNames | Where-Object { $_ -ne $roleName }
-
-            # Update the ListBox
-            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
-            $SelectedRolesListBox.Items.Refresh()
-        }
-        $SessionFunctions.Add('CheckBox_Unchecked') | Out-Null
 
         # Create an Initial Session State for the ASync runspace and add all the functions in $SessionFunctions to it.
         $InitialSessionState = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
@@ -1528,7 +1480,7 @@ Copyright 2023 NCT 9-1-1
                                                 <DataGridTemplateColumn Header=" ">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Name="CheckBox"
+                                                            <CheckBox Name="RoleCheckBox"
                                                                         IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
                                                                         Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}" />
                                                         </DataTemplate>
@@ -2958,54 +2910,6 @@ Copyright 2023 NCT 9-1-1
 
         #region Main Program buttons and fields
 
-        # --- More Realistic Test Data for $SortedRoles (Mimicking Live Data Structure) ---
-        <#
-$SortedRoles = @(
-    [PSCustomObject]@{
-        RoleDefinition = [PSCustomObject]@{
-            DisplayName = "Application Administrator"
-            Description = "Example Description for Application Administrator" # Add other properties if needed for realism
-            Id = "test-role-id-1"
-        }
-        # Add other properties of MicrosoftGraphUnifiedRoleEligibilitySchedule if needed for more realism, but RoleDefinition is key
-        Id = "test-schedule-id-1"
-    }
-    [PSCustomObject]@{
-        RoleDefinition = [PSCustomObject]@{
-            DisplayName = "Attack Simulation Administrator"
-            Description = "Example Description for Attack Simulation Administrator"
-            Id = "test-role-id-2"
-        }
-        Id = "test-schedule-id-2"
-    }
-    [PSCustomObject]@{
-        RoleDefinition = [PSCustomObject]@{
-            DisplayName = "Authentication Policy Administrator"
-            Description = "Example Description for Authentication Policy Administrator"
-            Id = "test-role-id-3"
-        }
-        Id = "test-schedule-id-3"
-    }
-    # Add more test roles here in the same structure
-    [PSCustomObject]@{
-        RoleDefinition = [PSCustomObject]@{
-            DisplayName = "Compliance Administrator"
-            Description = "Example Description for Compliance Administrator"
-            Id = "test-role-id-4"
-        }
-         Id = "test-schedule-id-4"
-    }
-    [PSCustomObject]@{
-        RoleDefinition = [PSCustomObject]@{
-            DisplayName = "Conditional Access Administrator"
-            Description = "Example Description for Conditional Access Administrator"
-            Id = "test-role-id-5"
-        }
-        Id = "test-schedule-id-5"
-    }
-)
-# --- End of More Realistic Test Data for $SortedRoles ---
-#>
         # Define the custom class
         class RoleItem {
             [bool]$Checkbox
@@ -3020,41 +2924,13 @@ $SortedRoles = @(
         # Create an ObservableCollection for the RolesDataGrid
         $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
         $RolesDataGrid.ItemsSource = $WPFGui.RolesList
-        # Sort the PIM roles
-        #$SortedRoles = $PimRoles | Sort-Object { $_.RoleDefinition.DisplayName }
-
-        <#
-write-verbose "--- DEBUG: $SortedRoles Object Structure ---" -verbose
-$SortedRoles | Get-Member
-write-verbose `r`n"--- DEBUG: First Role Object in $SortedRoles ---" -verbose
-$SortedRoles[0] | Get-Member
-write-verbose `r`n"--- DEBUG: First Role Object - RoleDefinition Property ---" -verbose
-$SortedRoles[0].RoleDefinition | Get-Member
-write-verbose `r`n"--- DEBUG: First Role Object - RoleDefinition.DisplayName Value ---" -verbose
-$SortedRoles[0].RoleDefinition.DisplayName
-write-verbose "--- DEBUG: End $SortedRoles Object Structure ---" -verbose
-#>
+        # Populate the RolesDataGrid with the roles from the PIMRoles array
         $RoleItems = @()
         foreach ($Role in $SortedRoles) {
             $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
         }
         #$RoleItems=$RoleItems | ConvertFrom-Csv # For ExampleGridItenms
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-        # Debug output to verify that the RolesList is populated
-        write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
-        write-verbose "--- DEBUG: Contents of \$WPFGui.RolesList after population ---"
-        if ($WPFGui.RolesList -and $WPFGui.RolesList.Count -gt 0) {
-            foreach ($RoleItemObject in $WPFGui.RolesList) {
-                write-verbose "    --- RoleItem Object ---"
-                write-verbose "        Checkbox: $($RoleItemObject.Checkbox)"
-                write-verbose "        Role:     $($RoleItemObject.Role)"
-            }
-        }
-        else {
-            write-verbose "    \$WPFGui.RolesList is either empty or null."
-        }
-        write-verbose "--- DEBUG: End of \$WPFGui.RolesList contents ---"
-        #endregion
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
 
