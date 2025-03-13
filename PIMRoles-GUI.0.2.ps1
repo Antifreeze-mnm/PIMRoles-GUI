@@ -2934,6 +2934,38 @@ Copyright 2023 NCT 9-1-1
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
 
+        $RoleCheckBox.Add_Checked({
+            param($sender, $eventArgs)
+
+            $roleItem = $sender.DataContext # Get the RoleItem object from the row
+            $roleName = $roleItem.Role         # Extract the Role Name
+            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
+            # Get the current items in the ListBox (if any)
+            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
+            # Add the role name if it's not already in the list
+            if ($selectedRoleNames -notcontains $roleName) {
+                $selectedRoleNames += $roleName
+            }
+            # Update the ListBox
+            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
+            $SelectedRolesListBox.Items.Refresh()
+        })
+
+        $RoleCheckBox.Add_Unchecked({
+            param($sender, $eventArgs)
+
+            $roleItem = $sender.DataContext # Get the RoleItem object from the row
+            $roleName = $roleItem.Role       # Extract the Role Name
+            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
+            # Get the current items in the ListBox (if any)
+            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
+            # Remove the role name from the list
+            $selectedRoleNames = $selectedRoleNames | Where-Object { $_ -ne $roleName }
+            # Update the ListBox
+            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
+            $SelectedRolesListBox.Items.Refresh()
+        })
+
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
                 $AnimationParts = @('MenuToggle', 'BurgerFlipper', 'BlurPanel')
