@@ -1278,8 +1278,6 @@ public static void SetTop(IntPtr hWindow)
                 $sender, 
                 $eventArgs
             )
-Write-verbose "DEBUG: CheckBox_Checked event triggered." -Verbose
-            <#
             $roleItem = $sender.DataContext # Get the RoleItem object from the row
             $roleName = $roleItem.Role       # Extract the Role Name
             $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
@@ -1295,7 +1293,6 @@ Write-verbose "DEBUG: CheckBox_Checked event triggered." -Verbose
             # Update the ListBox
             $SelectedRolesListBox.ItemsSource = $selectedRoleNames
             $SelectedRolesListBox.Items.Refresh()
-            #>
         }
         $SessionFunctions.Add('CheckBox_Checked') | Out-Null
         function CheckBox_Unchecked {
@@ -1303,8 +1300,6 @@ Write-verbose "DEBUG: CheckBox_Checked event triggered." -Verbose
                 $sender, 
                 $eventArgs
             )
-            Write-verbose "DEBUG: CheckBox_Unchecked event triggered." -Verbose
-            <#
             $roleItem = $sender.DataContext # Get the RoleItem object from the row
             $roleName = $roleItem.Role       # Extract the Role Name
             $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
@@ -1318,7 +1313,6 @@ Write-verbose "DEBUG: CheckBox_Checked event triggered." -Verbose
             # Update the ListBox
             $SelectedRolesListBox.ItemsSource = $selectedRoleNames
             $SelectedRolesListBox.Items.Refresh()
-            #>
         }
         $SessionFunctions.Add('CheckBox_Unchecked') | Out-Null
 
@@ -1536,8 +1530,7 @@ Copyright 2023 NCT 9-1-1
                                                         <DataTemplate>
                                                             <CheckBox Name="CheckBox"
                                                                         IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
-                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}"
-                                                                        Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
+                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}" />
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>

@@ -79,3 +79,34 @@ VERBOSE: DEBUG: Transcript stopping inside runsapce.
 Windows PowerShell transcript end
 End time: 20250313082629
 **********************
+**********************
+Windows PowerShell transcript start
+Start time: 20250313084030
+Username: DATACOM-NZ\mark.jackson
+RunAs User: DATACOM-NZ\mark.jackson
+Configuration Name: 
+Machine: DC5CD340FTTH (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -file .\PIMRoles-GUI.0.2.ps1 -verbose
+Process ID: 78256
+PSVersion: 5.1.22621.4391
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.4391
+BuildVersion: 10.0.22621.4391
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+VERBOSE: DEBUG: Transcript started inside runsapce.
+VERBOSE: RolesList populated with 27 items.
+Exception calling "ShowDialog" with "0" argument(s): "Failed to create a 'Checked' from the text 'CheckHandler'."
+At line:3059 char:48
++ ...    $WPFGui.UI.Dispatcher.InvokeAsync{ $WPFGui.UI.ShowDialog() }.Wait( ...
++                                           ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], MethodInvocationException
+    + FullyQualifiedErrorId : XamlParseException
+VERBOSE: DEBUG: Transcript stopping inside runsapce.
+**********************
+Windows PowerShell transcript end
+End time: 20250313084032
+**********************
