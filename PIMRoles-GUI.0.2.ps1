@@ -11,10 +11,10 @@ Copyright 2023 NCT 9-1-1
 try {
     # Connect to Microsoft Graph using device code authentication
     Connect-MgGraph -Scopes "RoleManagement.Read.Directory", "RoleManagement.ReadWrite.Directory", "User.Read" -UseDeviceAuthentication -NoWelcome
-    Write-Verbose "VERBOSE: [PIM Data] Connect-MgGraph successful" -Verbose
+    Write-Verbose "[PIM Data] Connect-MgGraph successful" -Verbose
 }
 catch {
-    Write-Verbose "VERBOSE: [PIM Data] Connect-MgGraph ERROR: $($_.Exception.Message)" -Verbose
+    Write-Verbose "[PIM Data] Connect-MgGraph ERROR: $($_.Exception.Message)" -Verbose
     return # Stop script execution if Connect-MgGraph fails
 }
 # Get the current user's ID
@@ -24,10 +24,10 @@ $CurrentAccountId = $CurrentUser.Id
 try {
     # Retrieve role eligibility schedules for the current user
     $PimRoles = Get-MgRoleManagementDirectoryRoleEligibilitySchedule -Filter "principalId eq '$CurrentAccountId'" -ExpandProperty "roleDefinition"
-    Write-Verbose "VERBOSE: [PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule successful. Role count: $($PimRoles.Count)" -Verbose
+    Write-Verbose "[PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule successful. Role count: $($PimRoles.Count)" -Verbose
 }
 catch {
-    Write-Verbose "VERBOSE: [PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule ERROR: $($_.Exception.Message)" -Verbose
+    Write-Verbose "[PIM Data] Get-MgRoleManagementDirectoryRoleEligibilitySchedule ERROR: $($_.Exception.Message)" -Verbose
     return # Stop script execution if Get-MgRoleManagementDirectoryRoleEligibilitySchedule fails
 }
 # Sort the PIM roles
@@ -53,7 +53,7 @@ $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
 
 #Create master runspace and add code
 $psCmd = [System.Management.Automation.PowerShell]::Create().AddScript( {
-        #Start-Transcript -Path "runspace_transcript.txt" -Append
+        Start-Transcript -Path "runspace_transcript.txt" -Append
         Write-Verbose "DEBUG: Transcript started inside runsapce." -verbose
         # Add WPF and Windows Forms assemblies. This must be done inside the runspace that contains the primary program code.
         try {
@@ -2908,64 +2908,124 @@ Copyright 2023 NCT 9-1-1
             })
         #endregion
 
+        #Debug WPFGHui Key Names
+        <#
+        Write-host "--- WPFGui Contents: ---"
+        $WPFGui.Keys | ForEach-Object {write-host "   $_" }
+        Write-host "------------------------"
+        $WPFGui.RolesDataGrid.Add_Loaded({
+            param($sender, $eventArgs)
+            Write-host "--- RolesDataGrid Loaded ---"
+        })
+#>
+
         #region Main Program buttons and fields
+ # Function to handle the PropertyChanged event of a RoleItem
+function RoleItem_PropertyChanged {
+    param($sender, $eventArgs)
 
-        # Define the custom class
-        class RoleItem {
-            [bool]$Checkbox
-            [string]$Role
+    Write-Host "--- RoleItem_PropertyChanged called for $($sender.Role), Property: $($eventArgs.PropertyName) ---"
 
-            RoleItem([bool]$checkbox, [string]$role) {
-                $this.Checkbox = $checkbox
-                $this.Role = $role
-            }
+    if ($eventArgs.PropertyName -eq "Checkbox") {
+        # Call the function to update the Selected Roles ListBox
+        Update-SelectedRolesListBox
+    }
+}
+
+# Function to update the Selected Roles ListBox based on the RolesList
+function Update-SelectedRolesListBox {
+    $SelectedRolesListBox = $WPFGui.SelectedRolesListBox
+    Write-Host "--- Update-SelectedRolesListBox called ---"
+    $selectedRoles = @()
+
+    foreach ($roleItem in $WPFGui.RolesList) {
+        if ($roleItem.Checkbox) {
+            $selectedRoles += $roleItem.Role
+            Write-Host "   Selected Role: $($roleItem.Role)"
         }
-        $RolesDataGrid = $WPFGui.RolesDataGrid
-        # Create an ObservableCollection for the RolesDataGrid
-        $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
-        $RolesDataGrid.ItemsSource = $WPFGui.RolesList
-        # Populate the RolesDataGrid with the roles from the PIMRoles array
-        $RoleItems = @()
-        foreach ($Role in $SortedRoles) {
-            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
+    }
+
+    Write-Host "   Selected Roles Count: $($selectedRoles.Count)"
+    if ($SelectedRolesListBox) {
+        $SelectedRolesListBox.ItemsSource = $selectedRoles
+        $SelectedRolesListBox.Items.Refresh()
+    } else {
+        Write-Host "--- WARNING: SelectedRolesListBox is NULL in Update-SelectedRolesListBox ---"
+    }
+    Write-Host "--- Update-SelectedRolesListBox finished ---"
+}
+
+class RoleItem : System.ComponentModel.INotifyPropertyChanged {
+    [bool]$Checkbox
+    [string]$Role
+
+    Hidden [System.ComponentModel.PropertyChangedEventHandler] $PropertyChanged
+
+    [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
+        $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
+    }
+
+    [Void] remove_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
+        $this.PropertyChanged = [Delegate]::Remove($this.PropertyChanged, $propertyChanged)
+    }
+
+    Hidden [Void] NotifyPropertyChanged([String] $propertyName) {
+        If ($this.PropertyChanged -cne $null) {
+            $this.PropertyChanged.Invoke($this, (New-Object System.ComponentModel.PropertyChangedEventArgs $propertyName))
         }
-        #$RoleItems=$RoleItems | ConvertFrom-Csv # For ExampleGridItenms
-        $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-        # Refresh the RolesDataGrid to ensure it displays the updated items
-        $RolesDataGrid.Items.Refresh()
+    }
 
-        $RoleCheckBox.Add_Checked({
-            param($sender, $eventArgs)
+    RoleItem([bool]$checkbox, [string]$role) {
+        $this.Checkbox = $checkbox
+        $this.Role = $role
+    }
 
-            $roleItem = $sender.DataContext # Get the RoleItem object from the row
-            $roleName = $roleItem.Role         # Extract the Role Name
-            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
-            # Get the current items in the ListBox (if any)
-            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
-            # Add the role name if it's not already in the list
-            if ($selectedRoleNames -notcontains $roleName) {
-                $selectedRoleNames += $roleName
-            }
-            # Update the ListBox
-            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
-            $SelectedRolesListBox.Items.Refresh()
-        })
+    # Override the setter for the Checkbox property to raise the event
+    [void]set_Checkbox([bool]$value) {
+        if ($this.Checkbox -ne $value) {
+            Write-Host "--- Checkbox setter called for $($this.Role), New Value: $value ---"
+            $this.Checkbox = $value
+            $this.NotifyPropertyChanged("Checkbox")
+        }
+    }
 
-        $RoleCheckBox.Add_Unchecked({
-            param($sender, $eventArgs)
+    # Override the setter for the Role property
+    [void]set_Role([string]$value) {
+        if ($this.Role -ne $value) {
+            $this.Role = $value
+            $this.NotifyPropertyChanged("Role")
+        }
+    }
+}
 
-            $roleItem = $sender.DataContext # Get the RoleItem object from the row
-            $roleName = $roleItem.Role       # Extract the Role Name
-            $SelectedRolesListBox = $WPFGui.SelectedRolesListBox # Get the ListBox
-            # Get the current items in the ListBox (if any)
-            $selectedRoleNames = @($SelectedRolesListBox.ItemsSource)
-            # Remove the role name from the list
-            $selectedRoleNames = $selectedRoleNames | Where-Object { $_ -ne $roleName }
-            # Update the ListBox
-            $SelectedRolesListBox.ItemsSource = $selectedRoleNames
-            $SelectedRolesListBox.Items.Refresh()
-        })
+$RolesDataGrid = $WPFGui.RolesDataGrid
+# Create an ObservableCollection for the RolesDataGrid
+$WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[object])) # Changed to [object]
+$RolesDataGrid.ItemsSource = $WPFGui.RolesList
+# Populate the RolesDataGrid with the roles from the PIMRoles array
 
+foreach ($Role in $SortedRoles) {
+    $roleObject = [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
+    # Attach the PropertyChanged event handler
+    $roleObject.add_PropertyChanged({param($s,$e) RoleItem_PropertyChanged $s $e})
+    $WPFGui.RolesList.Add($roleObject) | Out-Null
+}
+# Refresh the RolesDataGrid to ensure it displays the updated items
+$RolesDataGrid.Items.Refresh()
+
+# Check WPFGui contents before initial Update
+Write-Host "--- WPFGui Keys before initial Update: ---"
+$WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
+
+# Initial population of the Selected Roles ListBox - move to Window_Loaded
+# Update-SelectedRolesListBox
+
+# Add Window_Loaded event handler - using $WPFGui.UI
+$WPFGui.UI.Add_Loaded({
+    Write-Host "--- Window Loaded Event Triggered ---"
+    Update-SelectedRolesListBox
+})
+#>
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
                 $AnimationParts = @('MenuToggle', 'BurgerFlipper', 'BlurPanel')
@@ -3027,7 +3087,7 @@ Copyright 2023 NCT 9-1-1
             $WPFGui.Runspace.Close()
             $WPFGui.Runspace.Dispose()
         }
-        Write-Verbose "DEBUG: Transcript stopping inside runsapce." -verbose
+        Write-Verbose "DEBUG: Transcript stopping inside runspace." -verbose
         Stop-Transcript
     })
 $psCmd.Runspace = $newRunspace
