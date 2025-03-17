@@ -116,7 +116,7 @@ public static void SetTop(IntPtr hWindow)
         # This is the list of functions to add to the InitialSessionState that is used for all Asynchronus Runsspaces
         $SessionFunctions = New-Object  System.Collections.ArrayList
 
-        function Invoke-Async {
+        Function Invoke-Async {
             <#
                 .SYNOPSIS
                 Runs code, with variables, asynchronously
@@ -289,7 +289,7 @@ public static void SetTop(IntPtr hWindow)
             }
         }
         $SessionFunctions.Add('Set-Blur') | Out-Null
-        function Copy-Object {
+        Function Copy-Object {
             <#
                 .SYNOPSIS
                 Copies a PSObject
@@ -645,7 +645,7 @@ public static void SetTop(IntPtr hWindow)
             }
         }
         $SessionFunctions.Add('New-MessageDialog') | Out-Null
-        function Write-Activity {
+        Function Write-Activity {
             <#
                 .SYNOPSIS
                 Write a colorized  entry into the specified RichTextBox
@@ -737,7 +737,7 @@ public static void SetTop(IntPtr hWindow)
                 })
         }
         $SessionFunctions.Add('Write-Activity') | Out-Null
-        function Write-StatusBar {
+        Function Write-StatusBar {
             <#
                 .SYNOPSIS
                 Write text, and a progress percentage, to the StatusBar area
@@ -782,7 +782,7 @@ public static void SetTop(IntPtr hWindow)
         
         }
         $SessionFunctions.Add('Write-StatusBar') | Out-Null
-        function Save-Screenshot {
+        Function Save-Screenshot {
             <#
                 .SYNOPSIS
                 Save a Screenshot of the specified screen(s)
@@ -999,7 +999,7 @@ public static void SetTop(IntPtr hWindow)
             return $Result
         }
         $SessionFunctions.Add('Get-FolderName') | Out-Null
-        function ConvertFrom-FlowDocument {
+        Function ConvertFrom-FlowDocument {
             <#
                 .SYNOPSIS
                 Converts a FlowDocument to HTML
@@ -1053,7 +1053,7 @@ public static void SetTop(IntPtr hWindow)
             return $html
         }
         $SessionFunctions.Add('ConvertFrom-FlowDocument') | Out-Null
-        function Save-FlowDocument {
+        Function Save-FlowDocument {
             <#
                 .SYNOPSIS
                 Saves a RichTextBox FlowDocument in the requested format - LOG, RTF, or HTML.
@@ -1125,148 +1125,49 @@ public static void SetTop(IntPtr hWindow)
             $FHand.Close()
         }
         $SessionFunctions.Add('Save-FlowDocument') | Out-Null
-        function Activate-PIMRole {
-            param (
-                [array]$SelectedRoles,
-                [string]$Reason,
-                [double]$DurationHours,
+        Function ActivatePIMRoles {
+            param(
+                [Parameter(Mandatory = $true)]
+                [hashtable]$WPFGui,
+                [Parameter(Mandatory = $true)]
                 [string]$CurrentAccountId,
-                [array]$PimRoles,
-                [array]$allBuiltInRoles,
-                [array]$assignments,
-                [array]$policies,
-                [ref]$history,
-                [string]$savePath,
-                [object]$HistoryComboBox,
-                [object]$window
+                [Parameter(Mandatory = $true)]
+                [string]$Reason,
+                [Parameter(Mandatory = $true)]
+                [object]$Schedule
             )
-
-            $userRequestedDuration = [TimeSpan]::FromHours($DurationHours)
-            Set-Blur -On
-            # Activate selected roles
-            foreach ($SelectedRole in $SelectedRoles) {
-                # Retrieve the policy for the role
-                $roleDefinitionId = $SelectedRole.RoleDefinitionId
-                $roleDefinition = $allBuiltInRoles | Where-Object { $_.Id -eq $roleDefinitionId }
-
-                if ($roleDefinition) {
-                    $assignment = $assignments | Where-Object { $_.RoleDefinitionId -eq $roleDefinitionId }
-                    $policy = $policies | Where-Object { $_.Id -eq $assignment.PolicyId }
-
-                    if ($policy) {
-                        $policyId = $policy.Id
-                        $NewDialog = @{
-                            DialogTitle = 'PIM Roles' 
-                            H1          = "Activating"
-                            DialogText  = "Activating Role: $($roleDefinition.DisplayName)"
-                            ConfirmText = 'Continue'
-                            GetInput    = $false
-                            Beep        = $true
-                            IsError     = $false
-                            Owner       = $WPFGui.UI
-                        }
-                        $Dialog = New-MessageDialog @NewDialog
-                        Write-Output "Role: $($roleDefinition.DisplayName)"
-                        Write-Output "Policy ID: $policyId"
-
-                        # Retrieve the policy rule
-                        $ruleId = "Expiration_EndUser_Assignment"
-                        $rolePolicyRule = Get-MgPolicyRoleManagementPolicyRule -UnifiedRoleManagementPolicyId $policyId -UnifiedRoleManagementPolicyRuleId $ruleId
-
-                        # Access the "AdditionalProperties" field and get the "maximumDuration" value
-                        $maximumDurationIso = $rolePolicyRule.AdditionalProperties.maximumDuration
-
-                        # Convert the ISO 8601 duration to a TimeSpan object
-                        $maximumDuration = [System.Xml.XmlConvert]::ToTimeSpan($maximumDurationIso)
-
-                        # Compare the user's requested duration with the maximum allowed duration
-                        if ($userRequestedDuration -le $maximumDuration) {
-                            Write-Output "The requested duration of $DurationHours hours is within the allowed maximum duration of $($maximumDuration.TotalHours) hours."
-                            $Duration = $DurationHours
-                        }
-                        else {
-                            Write-Output "The requested duration of $DurationHours hours exceeds the allowed maximum duration of $($maximumDuration.TotalHours) hours. It has been adjusted to $($maximumDuration.TotalHours) hours."
-                            $Duration = $maximumDuration.TotalHours
-                        }
+        
+            Write-Host "--- Activate-PIMRoles function called ---"
+        
+            foreach ($roleItem in $WPFGui.RolesList) {
+                if ($roleItem.Checkbox) {
+                    Write-Host "--- Role Selected for Activation: $($roleItem.Role) ---"
+                    # Assuming your $roleItem object has a 'Role' property, which in turn has a 'RoleDefinition' property with an 'Id'
+                    $roleDefinitionId = $roleItem.Role.RoleDefinition.Id # Adjust this path if your object structure is different
+        
+                    $params = @{
+                        Action           = "selfActivate"
+                        PrincipalId      = $CurrentAccountId
+                        RoleDefinitionId = $roleDefinitionId
+                        DirectoryScopeId = "/"
+                        Justification    = $Reason
+                        ScheduleInfo     = $Schedule
                     }
-                    else {
-                        Write-Output "No policy found for role: $($roleDefinition.DisplayName)"
-                        $Duration = $DurationHours
+        
+                    try {
+                        Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest ---"
+                        #New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
+                        Write-Host "--- Activation request submitted for Role ID: $roleDefinitionId ---"
+                    }
+                    catch {
+                        Write-Error "Error submitting activation request for Role ID: $roleDefinitionId - $($_.Exception.Message)"
                     }
                 }
-                else {
-                    Write-Output "No role definition found for role ID: $roleDefinitionId"
-                    $Duration = $DurationHours
-                }
-
-                # Activate PIM role.
-                Write-Host "Activating PIM role '$($SelectedRole.RoleDisplayName)'..." -ForegroundColor Blue
-                # Create activation schedule based on the current role limit.
-                $Schedule = @{
-                    StartDateTime = (Get-Date).ToUniversalTime()
-                    Expiration    = @{
-                        Type     = "AfterDuration"
-                        Duration = "PT${Duration}H"
-                    }
-                }
-
-                # Setup parameters for activation
-                $params = @{
-                    Action           = "selfActivate"
-                    PrincipalId      = $CurrentAccountId
-                    RoleDefinitionId = $SelectedRole.RoleDefinitionId
-                    DirectoryScopeId = "/"
-                    Justification    = $Reason
-                    ScheduleInfo     = $Schedule
-                }
-
-                #New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
-                # Calculate the expiration time in UTC
-                $startDateTimeUtc = [datetime]::Parse($Schedule.StartDateTime)
-                $expirationTimeUtc = $startDateTimeUtc.AddHours($Duration)
-                # Convert the expiration time to local time
-                $expirationTimeLocal = $expirationTimeUtc.ToLocalTime()
-                # Format the expiration time in local time
-                $formattedExpirationTime = $expirationTimeLocal.ToString("hh:mm tt")
-                Write-host "$($SelectedRole.RoleDisplayName) has been activated until $formattedExpirationTime!" -ForegroundColor Green
             }
-
-            # Save the current selection to history
-            $newEntry = [PSCustomObject]@{
-                Id            = [guid]::NewGuid().ToString()
-                Reason        = $Reason
-                Duration      = $userRequestedDuration
-                SelectedRoles = $SelectedRoles
-            }
-
-            # Check for duplicates before adding to history
-            $existingEntry = $history.Value | Where-Object {
-                $_.Reason -eq $newEntry.Reason -and
-                $_.Duration -eq $newEntry.Duration -and
-        ($_.SelectedRoles | ForEach-Object { $_.RoleDisplayName }) -join "," -eq ($newEntry.SelectedRoles | ForEach-Object { $_.RoleDisplayName }) -join ","
-            }
-
-            if (-not $existingEntry) {
-                $history.Value.Add($newEntry)
-                $HistoryComboBox.Items.Add($newEntry.Reason)
-                $history.Value | ConvertTo-Json -Depth 10 | Set-Content -Path $savePath
-            }
-
-            # Load existing history
-            if (Test-Path $savePath) {
-                $history.Value = Get-Content -Path $savePath | ConvertFrom-Json -Depth 10
-                if ($history.Value -isnot [System.Collections.ArrayList]) {
-                    $history.Value = @($history.Value)
-                }
-            }
-            else {
-                $history.Value = @()
-            }
-
-            [System.Windows.MessageBox]::Show("Roles activated successfully!")
-            $window.Close()
+        
+            Write-Host "--- ActivatePIMRoles function completed ---"
         }
-        $SessionFunctions.Add('Activate-PIMRole') | Out-Null
+        $SessionFunctions.Add('ActivatePIMRoles') | Out-Null
 
         # Create an Initial Session State for the ASync runspace and add all the functions in $SessionFunctions to it.
         $InitialSessionState = [System.Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
@@ -2918,114 +2819,52 @@ Copyright 2023 NCT 9-1-1
             Write-host "--- RolesDataGrid Loaded ---"
         })
 #>
+        class RoleItem {
+            [bool]$Checkbox
+            [string]$Role
 
-        #region Main Program buttons and fields
- # Function to handle the PropertyChanged event of a RoleItem
-function RoleItem_PropertyChanged {
-    param($sender, $eventArgs)
-
-    Write-Host "--- RoleItem_PropertyChanged called for $($sender.Role), Property: $($eventArgs.PropertyName) ---"
-
-    if ($eventArgs.PropertyName -eq "Checkbox") {
-        # Call the function to update the Selected Roles ListBox
-        Update-SelectedRolesListBox
-    }
-}
-
-# Function to update the Selected Roles ListBox based on the RolesList
-function Update-SelectedRolesListBox {
-    $SelectedRolesListBox = $WPFGui.SelectedRolesListBox
-    Write-Host "--- Update-SelectedRolesListBox called ---"
-    $selectedRoles = @()
-
-    foreach ($roleItem in $WPFGui.RolesList) {
-        if ($roleItem.Checkbox) {
-            $selectedRoles += $roleItem.Role
-            Write-Host "   Selected Role: $($roleItem.Role)"
+            RoleItem([bool]$checkbox, [string]$role) {
+                $this.Checkbox = $checkbox
+                $this.Role = $role
+            }
         }
-    }
+        $RolesDataGrid = $WPFGui.RolesDataGrid
+        # Create an ObservableCollection for the RolesDataGrid
+        $WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[PSCustomObject]))
+        $RolesDataGrid.ItemsSource = $WPFGui.RolesList
 
-    Write-Host "   Selected Roles Count: $($selectedRoles.Count)"
-    if ($SelectedRolesListBox) {
-        $SelectedRolesListBox.ItemsSource = $selectedRoles
-        $SelectedRolesListBox.Items.Refresh()
-    } else {
-        Write-Host "--- WARNING: SelectedRolesListBox is NULL in Update-SelectedRolesListBox ---"
-    }
-    Write-Host "--- Update-SelectedRolesListBox finished ---"
-}
-
-class RoleItem : System.ComponentModel.INotifyPropertyChanged {
-    [bool]$Checkbox
-    [string]$Role
-
-    Hidden [System.ComponentModel.PropertyChangedEventHandler] $PropertyChanged
-
-    [Void] add_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
-        $this.PropertyChanged = [Delegate]::Combine($this.PropertyChanged, $propertyChanged)
-    }
-
-    [Void] remove_PropertyChanged([System.ComponentModel.PropertyChangedEventHandler] $propertyChanged) {
-        $this.PropertyChanged = [Delegate]::Remove($this.PropertyChanged, $propertyChanged)
-    }
-
-    Hidden [Void] NotifyPropertyChanged([String] $propertyName) {
-        If ($this.PropertyChanged -cne $null) {
-            $this.PropertyChanged.Invoke($this, (New-Object System.ComponentModel.PropertyChangedEventArgs $propertyName))
+        $RoleItems = @()
+        foreach ($Role in $SortedRoles) {
+            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
         }
-    }
-
-    RoleItem([bool]$checkbox, [string]$role) {
-        $this.Checkbox = $checkbox
-        $this.Role = $role
-    }
-
-    # Override the setter for the Checkbox property to raise the event
-    [void]set_Checkbox([bool]$value) {
-        if ($this.Checkbox -ne $value) {
-            Write-Host "--- Checkbox setter called for $($this.Role), New Value: $value ---"
-            $this.Checkbox = $value
-            $this.NotifyPropertyChanged("Checkbox")
+        #$RoleItems=$RoleItems | ConvertFrom-Csv # For ExampleGridItenms
+        $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
+        # Debug output to verify that the RolesList is populated
+        write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
+        write-verbose "--- DEBUG: Contents of \$WPFGui.RolesList after population ---"
+        if ($WPFGui.RolesList -and $WPFGui.RolesList.Count -gt 0) {
+            foreach ($RoleItemObject in $WPFGui.RolesList) {
+                write-verbose "    --- RoleItem Object ---"
+                write-verbose "        Checkbox: $($RoleItemObject.Checkbox)"
+                write-verbose "        Role:     $($RoleItemObject.Role)"
+            }
         }
-    }
-
-    # Override the setter for the Role property
-    [void]set_Role([string]$value) {
-        if ($this.Role -ne $value) {
-            $this.Role = $value
-            $this.NotifyPropertyChanged("Role")
+        else {
+            write-verbose "    \$WPFGui.RolesList is either empty or null."
         }
-    }
-}
+        write-verbose "--- DEBUG: End of \$WPFGui.RolesList contents ---"
+        #endregion
+        #>
 
-$RolesDataGrid = $WPFGui.RolesDataGrid
-# Create an ObservableCollection for the RolesDataGrid
-$WPFGui.Add('RolesList', (New-Object System.Collections.ObjectModel.ObservableCollection[object])) # Changed to [object]
-$RolesDataGrid.ItemsSource = $WPFGui.RolesList
-# Populate the RolesDataGrid with the roles from the PIMRoles array
+        # Refresh the RolesDataGrid to ensure it displays the updated items
+        $RolesDataGrid.Items.Refresh()
 
-foreach ($Role in $SortedRoles) {
-    $roleObject = [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
-    # Attach the PropertyChanged event handler
-    $roleObject.add_PropertyChanged({param($s,$e) RoleItem_PropertyChanged $s $e})
-    $WPFGui.RolesList.Add($roleObject) | Out-Null
-}
-# Refresh the RolesDataGrid to ensure it displays the updated items
-$RolesDataGrid.Items.Refresh()
-
-# Check WPFGui contents before initial Update
-Write-Host "--- WPFGui Keys before initial Update: ---"
-$WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
-
-# Initial population of the Selected Roles ListBox - move to Window_Loaded
-# Update-SelectedRolesListBox
-
-# Add Window_Loaded event handler - using $WPFGui.UI
-$WPFGui.UI.Add_Loaded({
-    Write-Host "--- Window Loaded Event Triggered ---"
-    Update-SelectedRolesListBox
-})
+        <#
+        # Check WPFGui contents before initial Update
+        Write-Host "--- WPFGui Keys before initial Update: ---"
+        $WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
 #>
+        #>
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
                 $AnimationParts = @('MenuToggle', 'BurgerFlipper', 'BlurPanel')
@@ -3046,33 +2885,52 @@ $WPFGui.UI.Add_Loaded({
                 [System.Win32Util]::SetTop($WPFGui.hWnd)
             })
         #endregion
+        # ... (Your existing code to load the form and populate the DataGrid)
 
-        $WPFGui.Execute.add_Click({
-                # Run this code when execute is clicked. A sample dialog is shown synchronously, then the variable values are printed asynchronously.
-                $SelectedRoles = @()
-                foreach ($SelectedItem in $WPFGui.RoleListBox.SelectedItems) {
-                    $Role = $WPFGui.PimRoles | Where-Object { $_.RoleDefinition.DisplayName -eq $SelectedItem.DisplayName }
-                    $SelectedRoles += [PSCustomObject]@{
-                        $RoleDisplayName  = $Role.RoleDefinition.DisplayName
-                        $RoleDefinitionId = $Role.RoleDefinition.Id
-                        $Reason           = $WPFGui.ReasonTextBox.Text
-                        $DurationHours    = [double]$WPFGui.DurationTextBox.Text
-                        $CurrentAccountId = $WPFGui.CurrentAccountId
-                        $PimRoles         = $WPFGui.PimRoles
-                        $allBuiltInRoles  = $WPFGui.allBuiltInRoles
-                        $assignments      = $WPFGui.assignments
-                        $policies         = $WPFGui.policies
-                        $history          = [ref]$WPFGui.history
-                        $savePath         = $WPFGui.savePath
-                        $HistoryComboBox  = $WPFGui.HistoryComboBox
-                        $window           = $WPFGui.window
+        # Event handler for the Execute button click
+        $WPFGui.Execute.Add_Click({
+                Write-Host "--- Execute Button Clicked ---"
+                Set-Blur -On
+                <#
+    $NewDialog = @{
+        DialogTitle = 'Confirm Activation' # You can customize this
+        H1          = "Confirm Role Activation"
+        DialogText  = "Are you sure you want to activate the selected roles?" # Customize as needed
+        ConfirmText = 'Yes, Activate'
+        GetInput    = $false
+        Beep        = $true
+        IsError     = $false
+        Owner       = $WPFGui.UI
+    }
+    $Dialog = New-MessageDialog @NewDialog
+    Set-Blur -Off
+#>
+                #
+                $AsyncParameters = @{
+                    Variables = @{
+                        WPFGui           = $WPFGui
+                        CurrentAccountId = $CurrentAccountId
+                        Reason           = $Reason
+                        Schedule         = $Schedule
                     }
-                    Invoke-Async -Code {
-                        Activate-PIMRole -SelectedRoles $SelectedRoles -Reason $Reason -DurationHours $DurationHours -CurrentAccountId $CurrentAccountId -PimRoles $PimRoles -allBuiltInRoles $allBuiltInRoles -assignments $assignments -policies $policies -history $history -savePath $savePath -HistoryComboBox $HistoryComboBox -window $window
+                    Code      = {
+                        # Access the variables passed in $AsyncParameters.Variables
+                        Write-Host "--- Asynchronous code block started ---"
+                        # Call the ALREADY DEFINED ActivatePIMRoles function
+                        ActivatePIMRoles -WPFGui $WPFGui -CurrentAccountId $CurrentAccountId -Reason $Reason -Schedule $Schedule
+                        Write-Host "--- Asynchronous code block finished ---"
                     }
-                    Set-Blur -Off
                 }
+                Write-Host "--- Asynchronous code Invoked ---"
+                $dummy = Invoke-Async @AsyncParameters
+                Write-Host  $dummy
+                #    }
             })
+
+        # ... (Rest of your script to show the form)
+
+        # Your ActivatePIMRoles function should still be defined elsewhere within the AddScript block
+        # (No need to define it again here)
 
         #endregion
         
