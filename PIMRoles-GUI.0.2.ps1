@@ -48,13 +48,14 @@ $newRunspace.ApartmentState = "STA"
 $newRunspace.ThreadOptions = "UseNewThread"
 $newRunspace.Open()
 $newRunspace.SessionStateProxy.SetVariable("WPFGui", $WPFGui)
+$newRunspace.SessionStateProxy.SetVariable("CurrentAccountId", $CurrentAccountId)
 $newRunspace.SessionStateProxy.SetVariable("SortedRoles", $SortedRoles)
 $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
 
 #Create master runspace and add code
-$psCmd = [System.Management.Automation.PowerShell]::Create().AddScript( {
+$psCmd = [System.Management.Automation.PowerShell]::Create().AddScript({
         Start-Transcript -Path "runspace_transcript.txt" -Append
-        Write-Verbose "DEBUG: Transcript started inside runsapce." -verbose
+        Write-Verbose "DEBUG: Transcript started inside runspace." -verbose
         # Add WPF and Windows Forms assemblies. This must be done inside the runspace that contains the primary program code.
         try {
             Add-Type -AssemblyName PresentationCore, PresentationFramework, WindowsBase, System.Drawing, system.windows.forms, System.Windows.Controls.Ribbon, System.DirectoryServices.AccountManagement
@@ -163,20 +164,35 @@ public static void SetTop(IntPtr hWindow)
                 $Variables
             )
             # Add the above code to a runspace and execute it.
-            $PSinstance = [powershell]::Create() #| Out-File -Append -FilePath $LogFile
-            $PSinstance.Runspace = [runspacefactory]::CreateRunspace($InitialSessionState)
-            $PSinstance.Runspace.ApartmentState = "STA"
-            $PSinstance.Runspace.ThreadOptions = "UseNewThread"
-            $PSinstance.Runspace.Open()
-            if ($Variables) {
-                # Pass in the specified variables from $VariableList
-                $Variables.keys.ForEach({ 
-                        $PSInstance.Runspace.SessionStateProxy.SetVariable($_, $Variables.$_)
-                    })
+            try {
+                $PSinstance = [powershell]::Create() #| Out-File -Append -FilePath $LogFile
+                $PSinstance.Runspace = [runspacefactory]::CreateRunspace($InitialSessionState)
+                $PSinstance.Runspace.ApartmentState = "STA"
+                $PSinstance.Runspace.ThreadOptions = "UseNewThread"
+                $PSinstance.Runspace.Open()
+                if ($Variables) {
+                    # Pass in the specified variables from $VariableList
+                    $Variables.keys.ForEach({ 
+                            $PSInstance.Runspace.SessionStateProxy.SetVariable($_, $Variables.$_)
+                        })
+                }
+                $PSInstance.AddScript($Code)
+                $asyncResult = $PSinstance.BeginInvoke()
+                #$PSinstance.BeginInvoke()
+                $WPFGui.Error = $PSInstance.Streams.Error
+                return $asyncResult
             }
-            $PSInstance.AddScript($Code)
-            $PSinstance.BeginInvoke()
-            $WPFGui.Error = $PSInstance.Streams.Error
+            catch {
+                write-error "Error creating or invoking runspoace: $($_Exception.Message)"
+            }
+            finally {
+                if ($PSinstance -and $PSinstance.Runspace -and $PSinstance.Runspace.RunspaceStateInfo.State -eq 'Opened') {
+                    $PSinstance.Runspace.Close()
+                }
+                if ($PSinstance) {
+                    $PSinstance.Dispose()
+                }
+            }
         }
         $SessionFunctions.Add('Invoke-Async') | Out-Null
         Function New-WPFDialog() {
@@ -269,7 +285,6 @@ public static void SetTop(IntPtr hWindow)
                 .OUTPUTS
                 None
             #>
-
             [CmdletBinding()]
             param (
                 [Parameter(ParameterSetName = 'On')]
@@ -1128,44 +1143,36 @@ public static void SetTop(IntPtr hWindow)
         Function ActivatePIMRoles {
             param(
                 [Parameter(Mandatory = $true)]
-                [hashtable]$WPFGui,
-                [Parameter(Mandatory = $true)]
                 [string]$CurrentAccountId,
                 [Parameter(Mandatory = $true)]
                 [string]$Reason,
                 [Parameter(Mandatory = $true)]
-                [object]$Schedule
+                [object]$Schedule,
+                [Parameter(Mandatory = $true)]
+                [string]$RoleDefinitionId
             )
         
-            Write-Host "--- Activate-PIMRoles function called ---"
+            Write-Host "--- ActivatePIMRoles function called for Role ID: $RoleDefinitionId ---"
         
-            foreach ($roleItem in $WPFGui.RolesList) {
-                if ($roleItem.Checkbox) {
-                    Write-Host "--- Role Selected for Activation: $($roleItem.Role) ---"
-                    # Assuming your $roleItem object has a 'Role' property, which in turn has a 'RoleDefinition' property with an 'Id'
-                    $roleDefinitionId = $roleItem.Role.RoleDefinition.Id # Adjust this path if your object structure is different
-        
-                    $params = @{
-                        Action           = "selfActivate"
-                        PrincipalId      = $CurrentAccountId
-                        RoleDefinitionId = $roleDefinitionId
-                        DirectoryScopeId = "/"
-                        Justification    = $Reason
-                        ScheduleInfo     = $Schedule
-                    }
-        
-                    try {
-                        Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest ---"
-                        #New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
-                        Write-Host "--- Activation request submitted for Role ID: $roleDefinitionId ---"
-                    }
-                    catch {
-                        Write-Error "Error submitting activation request for Role ID: $roleDefinitionId - $($_.Exception.Message)"
-                    }
-                }
+            $params = @{
+                Action           = "selfActivate"
+                PrincipalId      = $CurrentAccountId
+                RoleDefinitionId = $RoleDefinitionId
+                DirectoryScopeId = "/"
+                Justification    = $Reason
+                ScheduleInfo     = $Schedule
             }
         
-            Write-Host "--- ActivatePIMRoles function completed ---"
+            try {
+                Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest for Role ID: $RoleDefinitionId ---"
+                # New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
+                Write-Host "--- Activation request submitted for Role ID: $RoleDefinitionId ---"
+            }
+            catch {
+                Write-Error "Error submitting activation request for Role ID: $RoleDefinitionId - $($_.Exception.Message)"
+            }
+        
+            Write-Host "--- ActivatePIMRoles function completed for Role ID: $RoleDefinitionId ---"
         }
         $SessionFunctions.Add('ActivatePIMRoles') | Out-Null
 
@@ -1408,9 +1415,9 @@ Copyright 2023 NCT 9-1-1
                                     </ListBox>
                             </Border>
                             <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-                            <TextBox x:Name="ReasonTextBox" Height="28" Width="730"/>
+                            <TextBox Name="ReasonTextBox" Height="28" Width="730"/>
                             <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,8,0,0"/>
-                            <TextBox x:Name="DurationTextBox" Height="28" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
+                            <TextBox Name="DurationTextBox" Height="28" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
                             <Label x:Name="lblPreviousSelections" Content="Previous Selections" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
                             <ComboBox x:Name="HistoryComboBox" Height="28" Width="730" HorizontalAlignment="Left" Margin="10,3,0,0"/>
                         </StackPanel>
@@ -2822,10 +2829,12 @@ Copyright 2023 NCT 9-1-1
         class RoleItem {
             [bool]$Checkbox
             [string]$Role
+            [string]$RoleDefinitionId
 
-            RoleItem([bool]$checkbox, [string]$role) {
+            RoleItem([bool]$checkbox, [string]$role, [string]$roleDefinitionId) {
                 $this.Checkbox = $checkbox
                 $this.Role = $role
+                $this.RoleDefinitionId = $roleDefinitionId
             }
         }
         $RolesDataGrid = $WPFGui.RolesDataGrid
@@ -2835,9 +2844,9 @@ Copyright 2023 NCT 9-1-1
 
         $RoleItems = @()
         foreach ($Role in $SortedRoles) {
-            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName)
+            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName, $Role.RoleDefinition.Id)
         }
-        #$RoleItems=$RoleItems | ConvertFrom-Csv # For ExampleGridItenms
+
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
         # Debug output to verify that the RolesList is populated
         write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
@@ -2850,21 +2859,16 @@ Copyright 2023 NCT 9-1-1
             }
         }
         else {
-            write-verbose "    \$WPFGui.RolesList is either empty or null."
+            write-verbose "    WPFGui.RolesList is either empty or null."
         }
-        write-verbose "--- DEBUG: End of \$WPFGui.RolesList contents ---"
-        #endregion
-        #>
-
+        write-verbose "--- DEBUG: End of WPFGui.RolesList contents ---"
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
-
-        <#
+<#
         # Check WPFGui contents before initial Update
         Write-Host "--- WPFGui Keys before initial Update: ---"
         $WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
 #>
-        #>
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
                 $AnimationParts = @('MenuToggle', 'BurgerFlipper', 'BlurPanel')
@@ -2879,52 +2883,43 @@ Copyright 2023 NCT 9-1-1
 
         $WPFGui.UI.add_ContentRendered( {
                 # Once the window is visible, grab handle to it
-                if ( $WPFGui.hWnd -eq $null) {
+                if ( $null -eq $WPFGui.hWnd) {
                     $WPFGui.hWnd = (New-Object System.Windows.Interop.WindowInteropHelper($WPFGui.UI)).Handle
                 }
                 [System.Win32Util]::SetTop($WPFGui.hWnd)
             })
         #endregion
-        # ... (Your existing code to load the form and populate the DataGrid)
 
-        # Event handler for the Execute button click
         $WPFGui.Execute.Add_Click({
                 Write-Host "--- Execute Button Clicked ---"
                 Set-Blur -On
-                <#
-    $NewDialog = @{
-        DialogTitle = 'Confirm Activation' # You can customize this
-        H1          = "Confirm Role Activation"
-        DialogText  = "Are you sure you want to activate the selected roles?" # Customize as needed
-        ConfirmText = 'Yes, Activate'
-        GetInput    = $false
-        Beep        = $true
-        IsError     = $false
-        Owner       = $WPFGui.UI
-    }
-    $Dialog = New-MessageDialog @NewDialog
-    Set-Blur -Off
+<#                $NewDialog = @{
+                    DialogTitle = 'Example Dialog' 
+                    H1          = "This is a pop-up dialog"
+                    DialogText  = "Dialog text should go here"
+                    ConfirmText = 'Continue'
+                    GetInput    = $false
+                    Beep        = $true
+                    IsError     = $false
+                    Owner       = $WPFGui.UI
+                }
+                $Dialog = New-MessageDialog @NewDialog
+                Set-Blur -Off
 #>
-                #
-                $AsyncParameters = @{
-                    Variables = @{
-                        WPFGui           = $WPFGui
-                        CurrentAccountId = $CurrentAccountId
-                        Reason           = $Reason
-                        Schedule         = $Schedule
-                    }
-                    Code      = {
-                        # Access the variables passed in $AsyncParameters.Variables
-                        Write-Host "--- Asynchronous code block started ---"
-                        # Call the ALREADY DEFINED ActivatePIMRoles function
-                        ActivatePIMRoles -WPFGui $WPFGui -CurrentAccountId $CurrentAccountId -Reason $Reason -Schedule $Schedule
-                        Write-Host "--- Asynchronous code block finished ---"
+                #    if ($Dialog -eq [System.Windows.Forms.DialogResult]::OK) {
+                foreach ($roleItem in $WPFGui.RolesList) {
+                    if ($roleItem.Checkbox) {
+                        Write-Host "--- Role Selected for Activation: $($roleItem.Role) ---"
+                        $roleDefinitionId = $roleItem.RoleDefinitionId # Adjust path if needed
+
+                        Write-Host "CurrentAccountId: $CurrentAccountId"
+                        Write-Host "RoleDefinitionId: $roleDefinitionId"
+                        Write-Host "Reason: $($WPFGui.ReasonTextBox.Text)"
+                        Write-Host "Duration: $($WPFGui.DurationTextBox.Text)"
                     }
                 }
-                Write-Host "--- Asynchronous code Invoked ---"
-                $dummy = Invoke-Async @AsyncParameters
-                Write-Host  $dummy
                 #    }
+                Set-Blur -Off # Turn off blur after processing all selected roles
             })
 
         # ... (Rest of your script to show the form)
