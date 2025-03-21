@@ -50,6 +50,9 @@ $newRunspace.Open()
 $newRunspace.SessionStateProxy.SetVariable("WPFGui", $WPFGui)
 $newRunspace.SessionStateProxy.SetVariable("CurrentAccountId", $CurrentAccountId)
 $newRunspace.SessionStateProxy.SetVariable("SortedRoles", $SortedRoles)
+$newRunspace.SessionStateProxy.SetVariable("allBuiltInRoles", $allBuiltInRoles)
+$newRunspace.SessionStateProxy.SetVariable("Assignments", $assignments)
+$newRunspace.SessionStateProxy.SetVariable("Policies", $policies)
 $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
 
 #Create master runspace and add code
@@ -1349,18 +1352,25 @@ Copyright 2023 NCT 9-1-1
                                             ScrollViewer.CanContentScroll="True"
                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <!-- Add this DataGrid.RowStyle section -->
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <Setter Property="Foreground" Value="{Binding Foreground}"/>
+                                                </Style>
+                                            </DataGrid.RowStyle>
                                             <DataGrid.Columns>
                                                 <DataGridTemplateColumn Header=" ">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Name="RoleCheckBox"
-                                                                        IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
-                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}" />
+                                                                    IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                                                                    Style="{DynamicResource ToggleSwitch}"
+                                                                    IsEnabled="{Binding Path=IsEnabled, Mode=OneWay}" /> <!-- Corrected IsEnabled Binding -->
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Role" Width="Auto"
-                                                            Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
+                                                                    Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
@@ -2795,11 +2805,15 @@ Copyright 2023 NCT 9-1-1
             [bool]$Checkbox
             [string]$Role
             [string]$RoleDefinitionId
+            [bool]$IsEnabled
+            [string]$Foreground
 
-            RoleItem([bool]$checkbox, [string]$role, [string]$roleDefinitionId) {
+            RoleItem([bool]$checkbox, [string]$role, [string]$roleDefinitionId, [bool]$isEnabled, [string]$foreground) {
                 $this.Checkbox = $checkbox
                 $this.Role = $role
                 $this.RoleDefinitionId = $roleDefinitionId
+                $this.IsEnabled = $isEnabled
+                $this.Foreground = $foreground
             }
         }
         $RolesDataGrid = $WPFGui.RolesDataGrid
@@ -2809,24 +2823,28 @@ Copyright 2023 NCT 9-1-1
 
         $RoleItems = @()
         foreach ($Role in $SortedRoles) {
-            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName, $Role.RoleDefinition.Id)
+            $RoleDisplayName = $Role.RoleDefinition.DisplayName
+            $IsActive = $ActivePimRoles | Where-Object { $_.RoleDefinition.DisplayName -eq $RoleDisplayName }
+            $Foreground = if ($IsActive) { "Gainsboro" } else { "Black" }
+            $IsEnabled = if ($IsActive) { $false } else { $true }
+            $RoleItems += [RoleItem]::new($false, $RoleDisplayName, $Role.RoleDefinition.Id, $IsEnabled, $Foreground)
         }
-
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-        # Debug output to verify that the RolesList is populated
-        write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
-        write-verbose "--- DEBUG: Contents of \$WPFGui.RolesList after population ---"
+        <#        # Debug output to verify that the RolesList is populated
+        Write-Host "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
+        Write-Host "--- DEBUG: Contents of \$WPFGui.RolesList after population ---"
         if ($WPFGui.RolesList -and $WPFGui.RolesList.Count -gt 0) {
             foreach ($RoleItemObject in $WPFGui.RolesList) {
-                write-verbose "    --- RoleItem Object ---"
-                write-verbose "        Checkbox: $($RoleItemObject.Checkbox)"
-                write-verbose "        Role:     $($RoleItemObject.Role)"
+                Write-Host "    --- RoleItem Object ---"
+                Write-Host "        Checkbox: $($RoleItemObject.Checkbox)"
+                Write-Host "        Role:     $($RoleItemObject.Role)"
             }
         }
         else {
-            write-verbose "    WPFGui.RolesList is either empty or null."
+            Write-Host "    WPFGui.RolesList is either empty or null."
         }
-        write-verbose "--- DEBUG: End of WPFGui.RolesList contents ---"
+        Write-Host "--- DEBUG: End of WPFGui.RolesList contents ---"
+        #>
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
         <#
@@ -2856,25 +2874,65 @@ Copyright 2023 NCT 9-1-1
         #endregion
 
         $WPFGui.Execute.Add_Click({
-                Write-Host "--- Execute Button Clicked (Synchronous Activation) ---"
+                Write-Host "--- Execute Button Clicked (Synchronous Activation with Duration Check) ---"
                 Set-Blur -On
-        
                 $Reason = $WPFGui.ReasonTextBox.Text
-                $DurationHours = [double]$WPFGui.DurationTextBox.Text # Assuming DurationTextBox holds hours
+                $DurationHours = [double]$WPFGui.DurationTextBox.Text
+                $userRequestedDuration = [TimeSpan]::FromHours($DurationHours)
         
                 foreach ($roleItem in $WPFGui.RolesList) {
                     if ($roleItem.Checkbox) {
                         Write-Host "--- Role Selected for Activation: $($roleItem.Role) ---"
                         $roleDefinitionId = $roleItem.RoleDefinitionId
         
+                        # Retrieve the policy for the role
+                        $roleDefinition = $allBuiltInRoles | Where-Object { $_.Id -eq $roleDefinitionId }
+        
+                        if ($roleDefinition) {
+                            $assignment = $assignments | Where-Object { $_.RoleDefinitionId -eq $roleDefinitionId }
+                            $policy = $policies | Where-Object { $_.Id -eq $assignment.PolicyId }
+        
+                            if ($policy) {
+                                $policyId = $policy.Id
+                                Write-Host "Role: $($roleDefinition.DisplayName)"
+                                Write-Host "Policy ID: $policyId"
+        
+                                # Retrieve the policy rule
+                                $ruleId = "Expiration_EndUser_Assignment"
+                                $rolePolicyRule = Get-MgPolicyRoleManagementPolicyRule -UnifiedRoleManagementPolicyId $policyId -UnifiedRoleManagementPolicyRuleId $ruleId
+                                # Access the "AdditionalProperties" field and get the "maximumDuration" value
+                                $maximumDurationIso = $rolePolicyRule.AdditionalProperties.maximumDuration
+                                # Convert the ISO 8601 duration to a TimeSpan object
+                                $maximumDuration = [System.Xml.XmlConvert]::ToTimeSpan($maximumDurationIso)
+                                # Compare the user's requested duration with the maximum allowed duration
+                                if ($userRequestedDuration -le $maximumDuration) {
+                                    Write-Host "The requested duration of $DurationHours hours is within the allowed maximum duration of $($maximumDuration.TotalHours) hours."
+                                    $Duration = $DurationHours
+                                }
+                                else {
+                                    Write-Host "The requested duration of $DurationHours hours exceeds the allowed maximum duration of $($maximumDuration.TotalHours) hours. It has been adjusted to $($maximumDuration.TotalHours) hours."
+                                    $Duration = $maximumDuration.TotalHours
+                                }
+                            }
+                            else {
+                                Write-Host "No policy found for role: $($roleDefinition.DisplayName)"
+                                $Duration = $DurationHours
+                            }
+                        }
+                        else {
+                            Write-Host "No role definition found for role ID: $roleDefinitionId"
+                            $Duration = $DurationHours
+                        }
+
+                        # Create activation schedule based on the current role limit.
                         $Schedule = @{
                             StartDateTime = (Get-Date).ToUniversalTime().ToString("o") # Format as ISO 8601
                             Expiration    = @{
                                 Type     = "AfterDuration"
-                                Duration = "PT${DurationHours}H" # Format for PIM
+                                Duration = "PT${Duration}H" # Use the adjusted $Duration
                             }
                         }
-        
+
                         $params = @{
                             Action           = "selfActivate"
                             PrincipalId      = $CurrentAccountId
@@ -2883,14 +2941,16 @@ Copyright 2023 NCT 9-1-1
                             Justification    = $Reason
                             ScheduleInfo     = $Schedule
                         }
-        
+
+                        Write-host $($params | ConvertTo-Json -Depth 10)
+
                         try {
-                            #Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest for Role ID: $roleDefinitionId ---"
+                            Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest for Role ID: $roleDefinitionId ---"
                             #New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
                             Write-Host "--- Activation request submitted for Role ID: $roleDefinitionId ---"
                             # Calculate and display expiration time (similar to your original script)
                             $startDateTimeUtc = [datetime]::Parse($Schedule.StartDateTime)
-                            $expirationTimeUtc = $startDateTimeUtc.AddHours($DurationHours)
+                            $expirationTimeUtc = $startDateTimeUtc.AddHours($Duration) # Use the adjusted $Duration
                             $expirationTimeLocal = $expirationTimeUtc.ToLocalTime()
                             $formattedExpirationTime = $expirationTimeLocal.ToString("hh:mm tt")
                             Write-host "$($roleItem.Role) has been activated until $formattedExpirationTime!" -ForegroundColor Green
@@ -2900,11 +2960,10 @@ Copyright 2023 NCT 9-1-1
                         }
                     }
                 }
-        
                 Set-Blur -Off
             })
         #endregion
-        
+
         if ( -not $Failed ) {
             # Setup async runspace items
             $WPFGui.Host = $host

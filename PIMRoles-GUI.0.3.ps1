@@ -1349,18 +1349,25 @@ Copyright 2023 NCT 9-1-1
                                             ScrollViewer.CanContentScroll="True"
                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            <!-- Add this DataGrid.RowStyle section -->
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <Setter Property="Foreground" Value="{Binding Foreground}"/>
+                                                </Style>
+                                            </DataGrid.RowStyle>
                                             <DataGrid.Columns>
                                                 <DataGridTemplateColumn Header=" ">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Name="RoleCheckBox"
-                                                                        IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
-                                                                        Style="{DynamicResource ToggleSwitch}" IsEnabled="{Binding Path=EnableCheckbox, Mode=OneWay}" />
+                                                                    IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
+                                                                    Style="{DynamicResource ToggleSwitch}"
+                                                                    IsEnabled="{Binding Path=IsEnabled, Mode=OneWay}" /> <!-- Corrected IsEnabled Binding -->
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="Role" Width="Auto"
-                                                            Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
+                                                                    Binding="{Binding Path=Role, Mode=TwoWay, NotifyOnSourceUpdated=True}" />
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </ScrollViewer>
@@ -2795,11 +2802,15 @@ Copyright 2023 NCT 9-1-1
             [bool]$Checkbox
             [string]$Role
             [string]$RoleDefinitionId
+            [bool]$IsEnabled
+            [string]$Foreground
 
-            RoleItem([bool]$checkbox, [string]$role, [string]$roleDefinitionId) {
+            RoleItem([bool]$checkbox, [string]$role, [string]$roleDefinitionId, [bool]$isEnabled, [string]$foreground) {
                 $this.Checkbox = $checkbox
                 $this.Role = $role
                 $this.RoleDefinitionId = $roleDefinitionId
+                $this.IsEnabled = $isEnabled
+                $this.Foreground = $foreground
             }
         }
         $RolesDataGrid = $WPFGui.RolesDataGrid
@@ -2809,9 +2820,12 @@ Copyright 2023 NCT 9-1-1
 
         $RoleItems = @()
         foreach ($Role in $SortedRoles) {
-            $RoleItems += [RoleItem]::new($false, $Role.RoleDefinition.DisplayName, $Role.RoleDefinition.Id)
+            $RoleDisplayName = $Role.RoleDefinition.DisplayName
+            $IsActive = $ActivePimRoles | Where-Object { $_.RoleDefinition.DisplayName -eq $RoleDisplayName }
+            $Foreground = if ($IsActive) { "Gainsboro" } else { "Black" }
+            $IsEnabled = if ($IsActive) { $false } else { $true }
+            $RoleItems += [RoleItem]::new($false, $RoleDisplayName, $Role.RoleDefinition.Id, $IsEnabled, $Foreground)
         }
-
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
         # Debug output to verify that the RolesList is populated
         write-verbose "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
