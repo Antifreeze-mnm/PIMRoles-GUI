@@ -1328,17 +1328,14 @@ Copyright 2023 NCT 9-1-1
                     <DockPanel.Effect >
                         <BlurEffect x:Name="MainDockBlur" Radius="0"/>
                     </DockPanel.Effect>
-                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="635">
-                        <StackPanel Margin="0,0,0,-8">
+                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="623">
+                        <StackPanel Margin="0,0,0,-16">
                             <Label x:Name="lblSelectRoles" Content="Select Roles" Margin="10,0,0,0" Width="135" HorizontalAlignment="Left" FontSize="20"/>
                             <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,10,0,0" Width="735">
                                 <Grid>
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="234" Margin="0,10,0,0">
                                         <DataGrid
                                             Name="RolesDataGrid"
-                                            Margin="0,10,0,0"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="Top"
                                             AutoGenerateColumns="False"
                                             FrozenColumnCount="4"
                                             AlternationCount="2"
@@ -1353,7 +1350,7 @@ Copyright 2023 NCT 9-1-1
                                             IsReadOnly="True"
                                             ScrollViewer.CanContentScroll="True"
                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled" VerticalAlignment="Top">
                                             <!-- Add this DataGrid.RowStyle section -->
                                             <DataGrid.RowStyle>
                                                 <Style TargetType="DataGridRow">
@@ -1367,7 +1364,8 @@ Copyright 2023 NCT 9-1-1
                                                             <CheckBox Name="RoleCheckBox"
                                                                     IsChecked="{Binding Path=Checkbox, Mode=TwoWay, NotifyOnSourceUpdated=True, UpdateSourceTrigger=PropertyChanged}"
                                                                     Style="{DynamicResource ToggleSwitch}"
-                                                                    IsEnabled="{Binding Path=IsEnabled, Mode=OneWay}" /> <!-- Corrected IsEnabled Binding -->
+                                                                    IsEnabled="{Binding Path=IsEnabled, Mode=OneWay}" />
+                                                            <!-- Corrected IsEnabled Binding -->
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
@@ -1379,7 +1377,7 @@ Copyright 2023 NCT 9-1-1
                                 </Grid>
                             </Border>
                             <Label x:Name="lblSelectedRolesDisplay" Content="Selected Roles:" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
-                            <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,3,0,10" Width="735" Height="80">
+                            <Border CornerRadius="4" BorderBrush="Gray" BorderThickness="1" Background="White" Margin="2,3,0,10" Width="734" Height="69">
                                 <ListBox
                                     x:Name="SelectedRolesListBox"
                                     Margin="5"
@@ -1388,18 +1386,9 @@ Copyright 2023 NCT 9-1-1
                                     BorderBrush="{x:Null}"
                                     BorderThickness="0"
                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                    ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                    <ListBox.ItemsSource>
-                                        <CollectionViewSource Source="{Binding RolesList}" x:Name="SelectedRolesView">
-                                            <CollectionViewSource.Filter>
-                                                <Predicate>
-                                                    <Predicate.Method>
-                                                        <Method Name="FilterSelectedRoles" />
-                                                    </Predicate.Method>
-                                                </Predicate>
-                                            </CollectionViewSource.Filter>
-                                        </CollectionViewSource>
-                                    </ListBox.ItemsSource>
+                                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                    ItemsSource="{Binding RolesList}"
+                                    >
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Role}" />
@@ -1407,27 +1396,27 @@ Copyright 2023 NCT 9-1-1
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </Border>
-                            <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+                            <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0"/>
                             <TextBox Name="ReasonTextBox" Height="32" Width="730"/>
-                            <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,8,0,0"/>
+                            <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,4,0,0"/>
                             <TextBox Name="DurationTextBox" Height="30" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
                             <Label x:Name="lblPreviousSelections" Content="Previous Selections" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
-                            <ComboBox x:Name="HistoryComboBox" Height="32" Width="730" HorizontalAlignment="Left" Margin="10,3,0,0"/>
+                            <ComboBox x:Name="HistoryComboBox" Height="32" Width="735" HorizontalAlignment="Left" Margin="10,3,0,0"/>
                         </StackPanel>
                     </GroupBox>
                     <DockPanel Margin="10,0,10,0" DockPanel.Dock="Top" Height="46">
                         <StackPanel Orientation="Vertical" DockPanel.Dock="Left"
                                     HorizontalAlignment="Left" Width="200" VerticalAlignment="Top">
                             <Button Name="Execute" TabIndex="9" Content="Execute" IsDefault="True"
-                                        HorizontalAlignment="Stretch" Height="30" FontSize="14"
-                                        FontWeight="Normal" IsEnabled="True" Margin="0,10,0,0" />
+                                        HorizontalAlignment="Stretch" Height="28" FontSize="14"
+                                        FontWeight="Normal" IsEnabled="True" Margin="0,12,0,0" />
                             <CheckBox Name="RebootRequired" Visibility="Collapsed" IsChecked="False" />
                         </StackPanel>
                     </DockPanel>
-                    <GroupBox DockPanel.Dock="Top" Margin="10,10,10,0" Padding="8,0,8,8" Height="175" Width="776">
-                        <RichTextBox Name="Output" FontSize="12" FontFamily="Consolas"
+                    <GroupBox DockPanel.Dock="Top" Padding="8,0,8,8" Height="152" Width="778">
+                        <RichTextBox x:Name="Output" FontSize="12" FontFamily="Consolas"
                                     Background="{x:Null}" BorderBrush="{x:Null}" IsReadOnly="True"
-                                    BorderThickness="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,6" />
+                                    BorderThickness="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,2" Width="761" />
                     </GroupBox>
                 </DockPanel>
             </Border>
@@ -2818,9 +2807,6 @@ Copyright 2023 NCT 9-1-1
         })
 #>
 
-        function FilterSelectedRoles ($item) {
-            return $item.Checkbox
-        }
         class RoleItem {
             [bool]$Checkbox
             [string]$Role
@@ -2873,7 +2859,24 @@ Copyright 2023 NCT 9-1-1
         $WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
 #>
 
-        $RolesDataGrid.Add_CellEditEnding({
+        # Create a CollectionViewSource
+        $SelectedRolesView = [System.Windows.Data.CollectionViewSource]::new()
+        $SelectedRolesView.Source = $WPFGui.RolesList
+
+        # Define the filter predicate in PowerShell
+        $filterPredicate = {
+            param($item)
+            return $item.Checkbox
+        }
+
+        # Set the filter on the CollectionView
+        $SelectedRolesView.View.Filter = $filterPredicate
+
+        # Set the ItemsSource of the ListBox to the View of the CollectionViewSource
+        $WPFGui.SelectedRolesListBox.ItemsSource = $SelectedRolesView.View
+
+        # Refresh the view whenever a cell edit ends in the DataGrid (as before)
+        $WPFGui.RolesDataGrid.Add_CellEditEnding({
                 param($sender, $e)
                 if ($e.EditingElement -is [System.Windows.Controls.CheckBox]) {
                     $WPFGui.SelectedRolesView.View.Refresh()
