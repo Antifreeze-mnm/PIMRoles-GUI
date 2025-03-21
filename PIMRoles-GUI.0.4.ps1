@@ -39,6 +39,7 @@ $assignments = Get-MgPolicyRoleManagementPolicyAssignment -Filter "scopeId eq '/
 $policies = Get-MgPolicyRoleManagementPolicy -Filter "scopeId eq '/' and scopeType eq 'Directory'"
 # Get all active PIM role assignments for the current user
 $ActivePimRoles = Get-MgRoleManagementDirectoryRoleAssignment -Filter "principalId eq '$CurrentAccountId'" -ExpandProperty "roleDefinition"
+$DirectoryScopeID = get-mgorganization | Select-Object -ExpandProperty Id
 #EndRegion
 
 #CREATE HASHTABLE AND RUNSPACE FOR GUI
@@ -54,6 +55,7 @@ $newRunspace.SessionStateProxy.SetVariable("allBuiltInRoles", $allBuiltInRoles)
 $newRunspace.SessionStateProxy.SetVariable("Assignments", $assignments)
 $newRunspace.SessionStateProxy.SetVariable("Policies", $policies)
 $newRunspace.SessionStateProxy.SetVariable("ActivePimRoles", $ActivePimRoles)
+$newRunspace.SessionStateProxy.SetVariable("DirectoryScopeID", $DirectoryScopeID)
 
 #Create master runspace and add code
 $psCmd = [System.Management.Automation.PowerShell]::Create().AddScript({
@@ -1387,14 +1389,30 @@ Copyright 2023 NCT 9-1-1
                                     BorderThickness="0"
                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                    </ListBox>
+                                    <ListBox.ItemsSource>
+                                        <CollectionViewSource Source="{Binding RolesList}" x:Name="SelectedRolesView">
+                                            <CollectionViewSource.Filter>
+                                                <Predicate>
+                                                    <Predicate.Method>
+                                                        <Method Name="FilterSelectedRoles" />
+                                                    </Predicate.Method>
+                                                </Predicate>
+                                            </CollectionViewSource.Filter>
+                                        </CollectionViewSource>
+                                    </ListBox.ItemsSource>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Role}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
                             </Border>
                             <Label x:Name="lblReason" Content="Reason" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
-                            <TextBox Name="ReasonTextBox" Height="30" Width="730"/>
+                            <TextBox Name="ReasonTextBox" Height="32" Width="730"/>
                             <Label x:Name="lblDuration" Content="Duration (hours)" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,8,0,0"/>
                             <TextBox Name="DurationTextBox" Height="30" Width="104" HorizontalAlignment="Left" Margin="14,0,0,0"/>
                             <Label x:Name="lblPreviousSelections" Content="Previous Selections" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0"/>
-                            <ComboBox x:Name="HistoryComboBox" Height="30" Width="730" HorizontalAlignment="Left" Margin="10,3,0,0"/>
+                            <ComboBox x:Name="HistoryComboBox" Height="32" Width="730" HorizontalAlignment="Left" Margin="10,3,0,0"/>
                         </StackPanel>
                     </GroupBox>
                     <DockPanel Margin="10,0,10,0" DockPanel.Dock="Top" Height="46">
@@ -1413,7 +1431,6 @@ Copyright 2023 NCT 9-1-1
                     </GroupBox>
                 </DockPanel>
             </Border>
-
             <!-- Status Area -->
             <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="10,0,10,0" BorderThickness="0" CornerRadius="8" HorizontalAlignment="Stretch">
                 <StatusBar Name="StatusArea" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Background="{x:Null}">
@@ -1425,7 +1442,6 @@ Copyright 2023 NCT 9-1-1
                     </StatusBarItem>
                 </StatusBar>
             </Border>
-
         </Grid>
     </Border>
 </Window>
@@ -2801,6 +2817,10 @@ Copyright 2023 NCT 9-1-1
             Write-host "--- RolesDataGrid Loaded ---"
         })
 #>
+
+        function FilterSelectedRoles ($item) {
+            return $item.Checkbox
+        }
         class RoleItem {
             [bool]$Checkbox
             [string]$Role
@@ -2852,6 +2872,14 @@ Copyright 2023 NCT 9-1-1
         Write-Host "--- WPFGui Keys before initial Update: ---"
         $WPFGui.Keys | ForEach-Object { Write-Host "   $_" }
 #>
+
+        $RolesDataGrid.Add_CellEditEnding({
+                param($sender, $e)
+                if ($e.EditingElement -is [System.Windows.Controls.CheckBox]) {
+                    $WPFGui.SelectedRolesView.View.Refresh()
+                }
+            })
+
         $WPFGui.MenuOpen.add_Completed( {
                 # Flip the end points of the menu animation so that it will open when clicked and close when clicked again
                 $AnimationParts = @('MenuToggle', 'BurgerFlipper', 'BlurPanel')
@@ -2934,19 +2962,17 @@ Copyright 2023 NCT 9-1-1
                         }
 
                         $params = @{
+                            Justification    = $Reason
+                            DirectoryScopeId = $DirectoryScopeID
                             Action           = "selfActivate"
                             PrincipalId      = $CurrentAccountId
-                            RoleDefinitionId = $roleDefinitionId
-                            DirectoryScopeId = "/"
-                            Justification    = $Reason
                             ScheduleInfo     = $Schedule
+                            RoleDefinitionId = $roleDefinitionId
                         }
-
-                        Write-host $($params | ConvertTo-Json -Depth 10)
 
                         try {
                             Write-Host "--- Calling New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest for Role ID: $roleDefinitionId ---"
-                            #New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
+                            New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params | Out-Null
                             Write-Host "--- Activation request submitted for Role ID: $roleDefinitionId ---"
                             # Calculate and display expiration time (similar to your original script)
                             $startDateTimeUtc = [datetime]::Parse($Schedule.StartDateTime)
