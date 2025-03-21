@@ -122,7 +122,6 @@ public static void SetTop(IntPtr hWindow)
         # This is the list of functions to add to the InitialSessionState that is used for all Asynchronus Runsspaces
         $SessionFunctions = New-Object  System.Collections.ArrayList
 
-
         function Invoke-Async {
             <#
                 .SYNOPSIS
