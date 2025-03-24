@@ -2836,21 +2836,7 @@ Copyright 2023 NCT 9-1-1
             $RoleItems += [RoleItem]::new($false, $RoleDisplayName, $Role.RoleDefinition.Id, $IsEnabled, $Foreground)
         }
         $RoleItems.Foreach({ $WPFGui.RolesList.Add($_) | Out-Null })
-        <#        # Debug output to verify that the RolesList is populated
-        Write-Host "RolesList populated with $($WPFGui.RolesList.Count) items." -verbose
-        Write-Host "--- DEBUG: Contents of \$WPFGui.RolesList after population ---"
-        if ($WPFGui.RolesList -and $WPFGui.RolesList.Count -gt 0) {
-            foreach ($RoleItemObject in $WPFGui.RolesList) {
-                Write-Host "    --- RoleItem Object ---"
-                Write-Host "        Checkbox: $($RoleItemObject.Checkbox)"
-                Write-Host "        Role:     $($RoleItemObject.Role)"
-            }
-        }
-        else {
-            Write-Host "    WPFGui.RolesList is either empty or null."
-        }
-        Write-Host "--- DEBUG: End of WPFGui.RolesList contents ---"
-        #>
+
         # Refresh the RolesDataGrid to ensure it displays the updated items
         $RolesDataGrid.Items.Refresh()
         <#
